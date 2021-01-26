@@ -30,10 +30,16 @@ export class ProxyService {
       req.url = req.url.replace(`/proxy/${deploymentId}`, '');
       this.httpProxy.ws(req, req.socket, req.app.head, {
         target: `ws://${baseUrl}`,
+        changeOrigin: true,
         ws: true,
       });
     } else {
-      this.httpProxy.web(req, res, { target: `http://${baseUrl}` }, next);
+      this.httpProxy.web(
+        req,
+        res,
+        { target: `http://${baseUrl}`, changeOrigin: true },
+        next,
+      );
     }
   }
 }
