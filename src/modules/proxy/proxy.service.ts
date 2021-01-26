@@ -21,20 +21,16 @@ export class ProxyService {
     res: Response,
     next: NextFunction,
   ): void {
+    const baseUrl = `${this.resourcePrefix}-${deploymentId}`;
     const connection: string = req.headers['connection'];
     const upgrade: string = req.headers['upgrade'];
     if (connection === 'Upgrade' && upgrade === 'websocket') {
       this.httpProxy.ws(req, req.socket, req.app.head, {
-        target: `ws://${this.resourcePrefix}-${deploymentId}`,
+        target: `ws://${baseUrl}`,
         ws: true,
       });
     } else {
-      this.httpProxy.web(
-        req,
-        res,
-        { target: `http://${this.resourcePrefix}-${deploymentId}` },
-        next,
-      );
+      this.httpProxy.web(req, res, { target: `http://${baseUrl}` }, next);
     }
   }
 }
