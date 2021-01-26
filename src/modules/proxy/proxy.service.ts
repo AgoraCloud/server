@@ -26,7 +26,7 @@ export class ProxyService {
     const connection: string = req.headers['connection'];
     const upgrade: string = req.headers['upgrade'];
     if (connection === 'Upgrade' && upgrade === 'websocket') {
-      this.logger.debug({ url: req.url, connection, upgrade });
+      this.logger.error({ url: req.url, connection, upgrade });
       req.url = req.url.replace(`/proxy/${deploymentId}`, '');
       this.httpProxy.ws(req, req.socket, req.app.head, {
         target: `ws://${baseUrl}`,
