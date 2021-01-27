@@ -26,6 +26,7 @@ export class ProxyService {
       protocol: req.protocol,
       host: req.hostname,
       url: req.url,
+      path: req.path,
       headers: req.headers,
       cookies: req.cookies,
     });
