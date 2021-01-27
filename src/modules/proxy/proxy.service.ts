@@ -29,6 +29,7 @@ export class ProxyService {
       path: req.path,
       headers: req.headers,
       cookies: req.cookies,
+      deploymentId: deploymentId ? deploymentId : 'No ID',
     });
 
     const baseUrl = `${this.resourcePrefix}-${deploymentId}:80`;
