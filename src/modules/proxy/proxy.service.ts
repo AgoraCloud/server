@@ -22,21 +22,27 @@ export class ProxyService {
     next: NextFunction,
   ): void {
     const baseUrl = `${this.resourcePrefix}-${deploymentId}:80`;
-    const connection: string = req.headers['connection'];
-    const upgrade: string = req.headers['upgrade'];
-    if (connection === 'Upgrade' && upgrade === 'websocket') {
-      this.httpProxy.ws(req, req.socket, req.app.head, {
-        target: `ws://${baseUrl}`,
-        changeOrigin: true,
-        ws: true,
-      });
-    } else {
-      this.httpProxy.web(
-        req,
-        res,
-        { target: `http://${baseUrl}`, changeOrigin: true },
-        next,
-      );
-    }
+    this.httpProxy.web(
+      req,
+      res,
+      { target: `http://${baseUrl}`, changeOrigin: true, ws: true },
+      next,
+    );
+    // const connection: string = req.headers['connection'];
+    // const upgrade: string = req.headers['upgrade'];
+    // if (connection === 'Upgrade' && upgrade === 'websocket') {
+    //   this.httpProxy.ws(req, req.socket, req.app.head, {
+    //     target: `ws://${baseUrl}`,
+    //     changeOrigin: true,
+    //     ws: true,
+    //   });
+    // } else {
+    //   this.httpProxy.web(
+    //     req,
+    //     res,
+    //     { target: `http://${baseUrl}`, changeOrigin: true },
+    //     next,
+    //   );
+    // }
   }
 }
