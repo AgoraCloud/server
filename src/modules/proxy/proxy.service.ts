@@ -1,11 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import * as HttpProxy from 'http-proxy';
 
 @Injectable()
 export class ProxyService {
   private readonly resourcePrefix: string = 'agoracloud';
-  private logger: Logger = new Logger(ProxyService.name);
 
   constructor(@Inject(HttpProxy) private readonly httpProxy: HttpProxy) {}
 
@@ -22,12 +21,10 @@ export class ProxyService {
     res: Response,
     next: NextFunction,
   ): void {
-    const baseUrl = `${this.resourcePrefix}-${deploymentId}`;
+    const baseUrl = `${this.resourcePrefix}-${deploymentId}:80`;
     const connection: string = req.headers['connection'];
     const upgrade: string = req.headers['upgrade'];
     if (connection === 'Upgrade' && upgrade === 'websocket') {
-      this.logger.error({ url: req.url, connection, upgrade });
-      req.url = req.url.replace(`/proxy/${deploymentId}`, '');
       this.httpProxy.ws(req, req.socket, req.app.head, {
         target: `ws://${baseUrl}`,
         changeOrigin: true,
