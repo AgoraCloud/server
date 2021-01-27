@@ -14,8 +14,8 @@ import {
 import { Request, Response, NextFunction } from 'express';
 
 @Controller('proxy/:deploymentId')
-@UseGuards(JwtAuthenticationGuard)
-@UseInterceptors(DeploymentInterceptor)
+// @UseGuards(JwtAuthenticationGuard)
+// @UseInterceptors(DeploymentInterceptor)
 export class ProxyController {
   constructor(private readonly proxyService: ProxyService) {}
 

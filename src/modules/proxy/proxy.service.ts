@@ -21,7 +21,7 @@ export class ProxyService {
     res: Response,
     next: NextFunction,
   ): void {
-    const baseUrl = `${this.resourcePrefix}-${deploymentId}:80`;
+    const baseUrl = `lab.test.com:80`;
     const connection: string = req.headers['connection'];
     const upgrade: string = req.headers['upgrade'];
     if (connection === 'Upgrade' && upgrade === 'websocket') {
