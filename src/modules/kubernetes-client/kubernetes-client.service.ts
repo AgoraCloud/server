@@ -29,7 +29,7 @@ export class KubernetesClientService {
   private readonly logger = new Logger(KubernetesClientService.name);
 
   constructor(
-    @Inject(k8s.KubeConfig) private readonly kc: k8s.KubeConfig,
+    @Inject(k8s.KubeConfig) readonly kc: k8s.KubeConfig,
     private readonly configService: ConfigService,
     private readonly deploymentsService: DeploymentsService,
   ) {
