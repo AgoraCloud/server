@@ -22,38 +22,15 @@ export class ProxyService {
     res: Response,
     next: NextFunction,
   ): void {
-    this.logger.debug({
-      protocol: req.protocol,
-      host: req.hostname,
-      url: req.url,
-      path: req.path,
-      headers: req.headers,
-      cookies: req.cookies,
-      deploymentId: deploymentId || 'No ID',
-    });
-
-    const baseUrl = `${this.resourcePrefix}-${deploymentId}:80`;
-    // this.httpProxy.web(
-    //   req,
-    //   res,
-    //   { target: `http://${baseUrl}`, changeOrigin: true, ws: true },
-    //   next,
-    // );
+    const options: HttpProxy.ServerOptions = {
+      target: `http://${this.resourcePrefix}-${deploymentId}.${this.resourcePrefix}.svc.cluster.local`,
+    };
     const connection: string = req.headers['connection'];
     const upgrade: string = req.headers['upgrade'];
     if (connection === 'Upgrade' && upgrade === 'websocket') {
-      this.httpProxy.ws(req, req.socket, req.app.head, {
-        target: `ws://${baseUrl}`,
-        changeOrigin: true,
-        ws: true,
-      });
+      this.httpProxy.ws(req, req.socket, req.app.head, options);
     } else {
-      this.httpProxy.web(
-        req,
-        res,
-        { target: `http://${baseUrl}`, changeOrigin: true },
-        next,
-      );
+      this.httpProxy.web(req, res, options, next);
     }
   }
 }
