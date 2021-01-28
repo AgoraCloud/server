@@ -8,8 +8,6 @@ import * as HttpProxy from 'http-proxy';
 @Module({
   imports: [DeploymentsModule, KubernetesClientModule],
   providers: [ProxyService, { provide: HttpProxy, useValue: new HttpProxy() }],
-  controllers: [
-    // ProxyController
-  ],
+  controllers: [ProxyController],
 })
 export class ProxyModule {}

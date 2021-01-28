@@ -22,16 +22,16 @@ export class ProxyService implements OnModuleInit {
 
   onModuleInit() {
     const httpServer: Server = this.adapterHost.httpAdapter.getHttpServer();
-    const express: Express = this.adapterHost.httpAdapter.getInstance();
-    express.all('/proxy/:deploymentId/*', async (req, res) => {
-      const deploymentId: string = req.params.deploymentId;
-      req.url = req.url.replace(`/proxy/${deploymentId}`, '');
-      // const podIp: string = await this.getDeploymentPodIpAddress(deploymentId);
-      const options: HttpProxy.ServerOptions = {
-        target: `http://agoracloud-${deploymentId}`,
-      };
-      this.httpProxy.web(req, res, options);
-    });
+    // const express: Express = this.adapterHost.httpAdapter.getInstance();
+    // express.all('/proxy/:deploymentId/*', async (req, res) => {
+    //   const deploymentId: string = req.params.deploymentId;
+    //   req.url = req.url.replace(`/proxy/${deploymentId}`, '');
+    //   // const podIp: string = await this.getDeploymentPodIpAddress(deploymentId);
+    //   const options: HttpProxy.ServerOptions = {
+    //     target: `http://agoracloud-${deploymentId}`,
+    //   };
+    //   this.httpProxy.web(req, res, options);
+    // });
 
     httpServer.on('upgrade', async (req: Request, socket: Socket, head) => {
       const deploymentId: string = req.url.split('/')[2];
@@ -69,11 +69,7 @@ export class ProxyService implements OnModuleInit {
    * @param req the request
    * @param res the response
    */
-  async proxy(
-    deploymentId: string,
-    req: Request,
-    res: Response,
-  ): Promise<void> {
+  proxy(deploymentId: string, req: Request, res: Response): void {
     // const podIp: string = await this.getDeploymentPodIpAddress(deploymentId);
     // const options: HttpProxy.ServerOptions = {
     //   target: `http://${podIp}:8443`,
@@ -88,23 +84,27 @@ export class ProxyService implements OnModuleInit {
     // } else {
     //   this.httpProxy.web(req, res, options);
     // }
+    // const kubeUrl: url.URL = new url.URL(
+    //   this.kubernetesClientService.kc.getCurrentCluster().server,
+    // );
+    // const opts: request.Options = { url: '' };
+    // await this.kubernetesClientService.kc.applyToRequest(opts);
+    // const options: HttpProxy.ServerOptions = {
+    //   target: {
+    //     host: kubeUrl.hostname,
+    //     protocol: kubeUrl.protocol,
+    //     port: kubeUrl.port,
+    //     path: `/api/v1/namespaces/agoracloud/services/agoracloud-${deploymentId}:80/proxy/`,
+    //     key: opts.key.toString(),
+    //     cert: opts.cert.toString(),
+    //     ca: opts.ca.toString(),
+    //   },
+    // };
+    // this.httpProxy.web(req, res, options);
 
-    const kubeUrl: url.URL = new url.URL(
-      this.kubernetesClientService.kc.getCurrentCluster().server,
-    );
-    const opts: request.Options = { url: '' };
-    await this.kubernetesClientService.kc.applyToRequest(opts);
-
+    req.url = req.url.replace(`/proxy/${deploymentId}`, '');
     const options: HttpProxy.ServerOptions = {
-      target: {
-        host: kubeUrl.hostname,
-        protocol: kubeUrl.protocol,
-        port: kubeUrl.port,
-        path: `/api/v1/namespaces/agoracloud/services/agoracloud-${deploymentId}:80/proxy/`,
-        key: opts.key.toString(),
-        cert: opts.cert.toString(),
-        ca: opts.ca.toString(),
-      },
+      target: `http://agoracloud-${deploymentId}`,
     };
     this.httpProxy.web(req, res, options);
   }

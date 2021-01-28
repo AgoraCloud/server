@@ -19,11 +19,11 @@ export class ProxyController {
   constructor(private readonly proxyService: ProxyService) {}
 
   @All()
-  async proxy(
+  proxy(
     @Param('deploymentId') deploymentId: string,
     @Req() req: Request,
     @Res() res: Response,
-  ): Promise<void> {
-    await this.proxyService.proxy(deploymentId, req, res);
+  ): void {
+    this.proxyService.proxy(deploymentId, req, res);
   }
 }
