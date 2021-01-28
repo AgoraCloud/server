@@ -24,7 +24,7 @@ export class ProxyService {
   ): Promise<void> {
     const podIp: string = await this.getDeploymentPodIpAddress(deploymentId);
     const options: HttpProxy.ServerOptions = {
-      target: `http://${podIp}`,
+      target: `http://${podIp}:8443`,
     };
     const connection: string = req.headers['connection'];
     const upgrade: string = req.headers['upgrade'];
