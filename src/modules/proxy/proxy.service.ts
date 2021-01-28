@@ -1,17 +1,15 @@
+import { KubernetesClientService } from './../kubernetes-client/kubernetes-client.service';
 import { Request, Response } from 'express';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import * as HttpProxy from 'http-proxy';
+import { V1Pod } from '@kubernetes/client-node';
 
 @Injectable()
 export class ProxyService {
-  private readonly resourcePrefix: string = 'agoracloud';
-  private readonly logger: Logger = new Logger(ProxyService.name);
-
-  constructor(@Inject(HttpProxy) private readonly httpProxy: HttpProxy) {
-    httpProxy.on('error', (err, req, res, target) => {
-      this.logger.debug({ message: 'http proxy error', err, req, res, target });
-    });
-  }
+  constructor(
+    @Inject(HttpProxy) private readonly httpProxy: HttpProxy,
+    private readonly kubernetesClientService: KubernetesClientService,
+  ) {}
 
   /**
    * Proxy all deployment requests
@@ -19,9 +17,14 @@ export class ProxyService {
    * @param req the request
    * @param res the response
    */
-  proxy(deploymentId: string, req: Request, res: Response): void {
+  async proxy(
+    deploymentId: string,
+    req: Request,
+    res: Response,
+  ): Promise<void> {
+    const podIp: string = await this.getDeploymentPodIpAddress(deploymentId);
     const options: HttpProxy.ServerOptions = {
-      target: `http://${this.resourcePrefix}-${deploymentId}.${this.resourcePrefix}.svc.cluster.local`,
+      target: `http://${podIp}`,
     };
     const connection: string = req.headers['connection'];
     const upgrade: string = req.headers['upgrade'];
@@ -30,5 +33,16 @@ export class ProxyService {
     } else {
       this.httpProxy.web(req, res, options);
     }
+  }
+
+  /**
+   * Gets the deployment pod IP address
+   * @param deploymentId the deployment id
+   */
+  private async getDeploymentPodIpAddress(
+    deploymentId: string,
+  ): Promise<string> {
+    const pod: V1Pod = await this.kubernetesClientService.getPod(deploymentId);
+    return pod.status?.podIP;
   }
 }

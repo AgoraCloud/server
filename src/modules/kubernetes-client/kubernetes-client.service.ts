@@ -374,7 +374,7 @@ export class KubernetesClientService {
    * Get a Kubernetes pod
    * @param deploymentId the pods deployment id
    */
-  private async getPod(deploymentId: string): Promise<k8s.V1Pod> {
+  async getPod(deploymentId: string): Promise<k8s.V1Pod> {
     // Get all the pods
     const { body } = await this.k8sCoreV1Api.listNamespacedPod(
       this.kubernetesConfig.namespace,
