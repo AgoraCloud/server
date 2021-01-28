@@ -17,11 +17,11 @@ export class ProxyService implements OnModuleInit {
 
   onModuleInit() {
     const httpServer: Server = this.httpAdapterHost.httpAdapter.getHttpServer();
-    httpServer.on('upgrade', async (req: Request, socket: Socket, head) => {
+    httpServer.on('upgrade', (req: Request, socket: Socket, head) => {
       const deploymentId: string = req.url.split('/')[2];
       req.query = url.parse(req.url, true).query;
 
-      this.removeProxyUrlPrefix(req.url, deploymentId);
+      req.url = this.removeProxyUrlPrefix(req.url, deploymentId);
       this.httpProxy.ws(req, socket, head, this.makeProxyOptions(deploymentId));
     });
   }
@@ -33,7 +33,7 @@ export class ProxyService implements OnModuleInit {
    * @param res the response
    */
   proxy(deploymentId: string, req: Request, res: Response): void {
-    this.removeProxyUrlPrefix(req.url, deploymentId);
+    req.url = this.removeProxyUrlPrefix(req.url, deploymentId);
     this.httpProxy.web(req, res, this.makeProxyOptions(deploymentId));
   }
 
@@ -50,7 +50,10 @@ export class ProxyService implements OnModuleInit {
    * @param requestUrl the request url
    * @param deploymentId the deployment id
    */
-  private removeProxyUrlPrefix(requestUrl: string, deploymentId: string): void {
-    requestUrl = requestUrl.replace(`/proxy/${deploymentId}`, '');
+  private removeProxyUrlPrefix(
+    requestUrl: string,
+    deploymentId: string,
+  ): string {
+    return requestUrl.replace(`/proxy/${deploymentId}`, '');
   }
 }
