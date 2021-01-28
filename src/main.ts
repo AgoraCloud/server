@@ -16,9 +16,9 @@ async function bootstrap() {
   const configService: ConfigService = app.get(ConfigService);
   const port: number = configService.get<number>('port');
 
-  // app.useGlobalPipes(
-  //   new ValidationPipe({ forbidUnknownValues: true, whitelist: true }),
-  // );
+  app.useGlobalPipes(
+    new ValidationPipe({ forbidUnknownValues: true, whitelist: true }),
+  );
   app.use(cookieParser());
   // TODO: figure out how to disable these for the /proxy endpoint
   // app.use(helmet());

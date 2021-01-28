@@ -25,6 +25,9 @@ export class ProxyService {
     const podIp: string = await this.getDeploymentPodIpAddress(deploymentId);
     const options: HttpProxy.ServerOptions = {
       target: `http://${podIp}:8443`,
+      toProxy: true,
+      secure: false,
+      timeout: 120000,
     };
     const connection: string = req.headers['connection'];
     const upgrade: string = req.headers['upgrade'];
