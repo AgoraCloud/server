@@ -12,6 +12,5 @@ import { KubernetesClientController } from './kubernetes-client.controller';
     { provide: KubeConfig, useValue: new KubeConfig() },
   ],
   controllers: [KubernetesClientController],
-  exports: [KubernetesClientService],
 })
 export class KubernetesClientModule {}

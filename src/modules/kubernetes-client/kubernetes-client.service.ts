@@ -29,7 +29,7 @@ export class KubernetesClientService {
   private readonly logger = new Logger(KubernetesClientService.name);
 
   constructor(
-    @Inject(k8s.KubeConfig) readonly kc: k8s.KubeConfig,
+    @Inject(k8s.KubeConfig) private readonly kc: k8s.KubeConfig,
     private readonly configService: ConfigService,
     private readonly deploymentsService: DeploymentsService,
   ) {
@@ -374,7 +374,7 @@ export class KubernetesClientService {
    * Get a Kubernetes pod
    * @param deploymentId the pods deployment id
    */
-  async getPod(deploymentId: string): Promise<k8s.V1Pod> {
+  private async getPod(deploymentId: string): Promise<k8s.V1Pod> {
     // Get all the pods
     const { body } = await this.k8sCoreV1Api.listNamespacedPod(
       this.kubernetesConfig.namespace,
