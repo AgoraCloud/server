@@ -26,9 +26,9 @@ export class ProxyService implements OnModuleInit {
     express.all('/proxy/:deploymentId/*', async (req, res) => {
       const deploymentId: string = req.params.deploymentId;
       req.url = req.url.replace(`/proxy/${deploymentId}`, '');
-      const podIp: string = await this.getDeploymentPodIpAddress(deploymentId);
+      // const podIp: string = await this.getDeploymentPodIpAddress(deploymentId);
       const options: HttpProxy.ServerOptions = {
-        target: `http://${podIp}:8443`,
+        target: `http://agoracloud-${deploymentId}:8443`,
       };
       this.httpProxy.web(req, res, options);
     });
@@ -37,9 +37,9 @@ export class ProxyService implements OnModuleInit {
       const deploymentId: string = req.url.split('/')[2];
       req.url = req.url.replace(`/proxy/${deploymentId}`, '');
       req.query = url.parse(req.url, true).query;
-      const podIp: string = await this.getDeploymentPodIpAddress(deploymentId);
+      // const podIp: string = await this.getDeploymentPodIpAddress(deploymentId);
       const options: HttpProxy.ServerOptions = {
-        target: `http://${podIp}:8443`,
+        target: `http://agoracloud-${deploymentId}:8443`,
       };
       this.httpProxy.ws(req, socket, head, options);
 
