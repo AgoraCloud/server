@@ -7,7 +7,11 @@ export class ProxyService {
   private readonly resourcePrefix: string = 'agoracloud';
   private readonly logger: Logger = new Logger(ProxyService.name);
 
-  constructor(@Inject(HttpProxy) private readonly httpProxy: HttpProxy) {}
+  constructor(@Inject(HttpProxy) private readonly httpProxy: HttpProxy) {
+    httpProxy.on('error', (err, req, res, target) => {
+      this.logger.debug({ message: 'http proxy error', err, req, res, target });
+    });
+  }
 
   /**
    * Proxy all deployment requests
@@ -22,13 +26,9 @@ export class ProxyService {
     const connection: string = req.headers['connection'];
     const upgrade: string = req.headers['upgrade'];
     if (connection === 'Upgrade' && upgrade === 'websocket') {
-      this.httpProxy.ws(req, req.socket, req.app.head, options, (err) => {
-        this.logger.error({ message: 'WS Proxy Error', err });
-      });
+      this.httpProxy.ws(req, req.socket, req.app.head, options);
     } else {
-      this.httpProxy.web(req, res, options, (err) => {
-        this.logger.error({ message: 'WEB Proxy Error', err });
-      });
+      this.httpProxy.web(req, res, options);
     }
   }
 }
