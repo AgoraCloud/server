@@ -15,12 +15,12 @@ export class ProxyService implements OnModuleInit {
   ) {}
 
   onModuleInit() {
-    const httpServer: Server = this.httpAdapterHost.httpAdapter.getHttpServer();
-    httpServer.on('upgrade', (req: Request, socket: Socket, head) => {
-      const deploymentId: string = req.url.split('/')[2];
-      req.url = this.removeProxyUrlPrefix(req.url, deploymentId);
-      this.httpProxy.ws(req, socket, head, this.makeProxyOptions(deploymentId));
-    });
+    // const httpServer: Server = this.httpAdapterHost.httpAdapter.getHttpServer();
+    // httpServer.on('upgrade', (req: Request, socket: Socket, head) => {
+    //   const deploymentId: string = req.url.split('/')[2];
+    //   req.url = this.removeProxyUrlPrefix(req.url, deploymentId);
+    //   this.httpProxy.ws(req, socket, head, this.makeProxyOptions(deploymentId));
+    // });
   }
 
   /**
@@ -31,7 +31,21 @@ export class ProxyService implements OnModuleInit {
    */
   proxy(deploymentId: string, req: Request, res: Response): void {
     req.url = this.removeProxyUrlPrefix(req.url, deploymentId);
-    this.httpProxy.web(req, res, this.makeProxyOptions(deploymentId));
+    const connection: string = req.headers['connection'];
+    const upgrade: string = req.headers['upgrade'];
+    if (connection === 'Upgrade' && upgrade === 'websocket') {
+      this.httpProxy.ws(
+        req,
+        req.socket,
+        req.app.head,
+        this.makeProxyOptions(deploymentId),
+      );
+    } else {
+      this.httpProxy.web(req, res, this.makeProxyOptions(deploymentId));
+    }
+
+    // req.url = this.removeProxyUrlPrefix(req.url, deploymentId);
+    // this.httpProxy.web(req, res, this.makeProxyOptions(deploymentId));
   }
 
   /**
