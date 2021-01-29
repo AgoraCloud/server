@@ -4,7 +4,6 @@ import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import * as HttpProxy from 'http-proxy';
 import { Server } from 'http';
 import { Socket } from 'net';
-import { URL } from 'url';
 
 @Injectable()
 export class ProxyService implements OnModuleInit {
@@ -19,12 +18,6 @@ export class ProxyService implements OnModuleInit {
     const httpServer: Server = this.httpAdapterHost.httpAdapter.getHttpServer();
     httpServer.on('upgrade', (req: Request, socket: Socket, head) => {
       const deploymentId: string = req.url.split('/')[2];
-
-      // const requestUrl: URL = new URL(req.url);
-      // for (const paramKey of requestUrl.searchParams.keys()) {
-      //   req.query[paramKey] = requestUrl.searchParams.get(paramKey);
-      // }
-
       req.url = this.removeProxyUrlPrefix(req.url, deploymentId);
       this.httpProxy.ws(req, socket, head, this.makeProxyOptions(deploymentId));
     });
@@ -46,7 +39,10 @@ export class ProxyService implements OnModuleInit {
    * @param deploymentId the deployment id
    */
   private makeProxyOptions(deploymentId: string): HttpProxy.ServerOptions {
-    return { target: `http://${this.servicePrefix}-${deploymentId}` };
+    return {
+      target: `http://${this.servicePrefix}-${deploymentId}`,
+      changeOrigin: true,
+    };
   }
 
   /**
