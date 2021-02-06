@@ -4,8 +4,8 @@ import {
   PodConditionStatus,
 } from './schemas/pod-condition.schema';
 import { PodPhase } from './schemas/pod-phase.schema';
-import { DeploymentsService } from './../deployments/deployments.service';
-import { UpdateDeploymentResourcesDto } from './../deployments/dto/update-deployment.dto';
+import { DeploymentsService } from '../deployments/deployments.service';
+import { UpdateDeploymentResourcesDto } from '../deployments/dto/update-deployment.dto';
 import { DeploymentPodMetricsNotAvailableException } from '../../exceptions/deployment-pod-metrics-not-available.exception';
 import { DeploymentMetricsDto } from './dto/deployment-metrics.dto';
 import { DeploymentPodNotAvailableException } from '../../exceptions/deployment-pod-not-available.exception';
@@ -13,12 +13,12 @@ import {
   DeploymentDocument,
   DeploymentProperties,
   DeploymentStatus,
-} from './../deployments/schemas/deployment.schema';
-import { KubernetesConfig } from './../../config/configuration.interface';
+} from '../deployments/schemas/deployment.schema';
+import { KubernetesConfig } from '../../config/configuration.interface';
 import { ConfigService } from '@nestjs/config';
-import { DeploymentDeletedEvent } from './../../events/deployment-deleted.event';
-import { DeploymentUpdatedEvent } from './../../events/deployment-updated.event';
-import { DeploymentCreatedEvent } from './../../events/deployment-created.event';
+import { DeploymentDeletedEvent } from '../../events/deployment-deleted.event';
+import { DeploymentUpdatedEvent } from '../../events/deployment-updated.event';
+import { DeploymentCreatedEvent } from '../../events/deployment-created.event';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import * as k8s from '@kubernetes/client-node';
 import { OnEvent } from '@nestjs/event-emitter';
@@ -28,13 +28,13 @@ import * as request from 'request';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
-export class KubernetesClientService {
+export class KubernetesService {
   private readonly k8sCoreV1Api: k8s.CoreV1Api;
   private readonly k8sAppsV1Api: k8s.AppsV1Api;
   private readonly kubernetesConfig: KubernetesConfig;
   private readonly resourcePrefix: string = 'agoracloud';
   // TODO: remove after debugging is done
-  private readonly logger = new Logger(KubernetesClientService.name);
+  private readonly logger = new Logger(KubernetesService.name);
 
   constructor(
     @Inject(k8s.KubeConfig) private readonly kc: k8s.KubeConfig,

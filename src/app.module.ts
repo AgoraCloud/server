@@ -11,7 +11,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { MailModule } from './modules/mail/mail.module';
 import { DeploymentsModule } from './modules/deployments/deployments.module';
-import { KubernetesClientModule } from './modules/kubernetes-client/kubernetes-client.module';
+import { KubernetesModule } from './modules/kubernetes/kubernetes.module';
 import { ProxyModule } from './modules/proxy/proxy.module';
 import * as Joi from '@hapi/joi';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -84,7 +84,7 @@ import { HealthModule } from './modules/health/health.module';
     EventEmitterModule.forRoot(),
     MailModule,
     DeploymentsModule,
-    KubernetesClientModule,
+    KubernetesModule,
     ProxyModule,
     HealthModule,
   ],
