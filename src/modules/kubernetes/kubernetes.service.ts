@@ -710,9 +710,11 @@ export class KubernetesService {
     const namespace: string = this.generateResourceName(workspaceId);
     try {
       await this.createNamespace(namespace, workspaceId);
-      await this.createNetworkPolicy(namespace);
+      // TODO: enable this when the method is implemented
+      // await this.createNetworkPolicy(namespace);
       await this.createRole(namespace, workspaceId);
       await this.createRoleBinding(namespace, workspaceId);
+      await this.startNamespacedPodInformer(namespace);
     } catch (error) {
       // TODO: handle errors
       this.logger.error({
@@ -853,29 +855,32 @@ export class KubernetesService {
   }
 
   /**
-   * Set up and start the Kubernetes pod informer
+   * Set up and start the Kubernetes pod informer for all namespaces
    */
   private async startPodInformer(): Promise<void> {
     const workspaceNamespaces: WorkspaceNamespace[] = await this.getAllNamespaces();
     for (const workspaceNamespace of workspaceNamespaces) {
-      const namespace: string = workspaceNamespace.namespace;
-      const listFn = (): Promise<{
-        response: http.IncomingMessage;
-        body: k8s.V1PodList;
-      }> => this.k8sCoreV1Api.listNamespacedPod(namespace);
-      const informer: k8s.Informer<k8s.V1Pod> = k8s.makeInformer(
-        this.kc,
-        `/api/v1/namespaces/${namespace}/pods`,
-        listFn,
-      );
-      informer.on('update', (pod: k8s.V1Pod) =>
-        this.updateDeploymentStatus(pod),
-      );
-      informer.on('error', (pod: k8s.V1Pod) =>
-        this.updateDeploymentStatus(pod),
-      );
-      await informer.start();
+      await this.startNamespacedPodInformer(workspaceNamespace.namespace);
     }
+  }
+
+  /**
+   * Set up and start the Kubernetes pod informer for a specific namespace
+   * @param namespace the Kubernetes namespace
+   */
+  private async startNamespacedPodInformer(namespace: string) {
+    const listFn = (): Promise<{
+      response: http.IncomingMessage;
+      body: k8s.V1PodList;
+    }> => this.k8sCoreV1Api.listNamespacedPod(namespace);
+    const informer: k8s.Informer<k8s.V1Pod> = k8s.makeInformer(
+      this.kc,
+      `/api/v1/namespaces/${namespace}/pods`,
+      listFn,
+    );
+    informer.on('update', (pod: k8s.V1Pod) => this.updateDeploymentStatus(pod));
+    informer.on('error', (pod: k8s.V1Pod) => this.updateDeploymentStatus(pod));
+    await informer.start();
   }
 
   /**
