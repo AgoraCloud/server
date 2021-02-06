@@ -1,3 +1,7 @@
+import { DeploymentDocument } from './../deployments/schemas/deployment.schema';
+import { WorkspaceNamespace } from './schemas/workspace-namespace.schema';
+import { WorkspaceDocument } from './../workspaces/schemas/workspace.schema';
+import { WorkspacesService } from './../workspaces/workspaces.service';
 import { WorkspaceDeletedEvent } from './../../events/workspace-deleted.event';
 import { WorkspaceCreatedEvent } from './../../events/workspace-created.event';
 import {
@@ -12,7 +16,6 @@ import { DeploymentPodMetricsNotAvailableException } from '../../exceptions/depl
 import { DeploymentMetricsDto } from './dto/deployment-metrics.dto';
 import { DeploymentPodNotAvailableException } from '../../exceptions/deployment-pod-not-available.exception';
 import {
-  DeploymentDocument,
   DeploymentProperties,
   DeploymentStatus,
 } from '../deployments/schemas/deployment.schema';
@@ -44,6 +47,7 @@ export class KubernetesService {
     @Inject(k8s.KubeConfig) private readonly kc: k8s.KubeConfig,
     private readonly configService: ConfigService,
     private readonly deploymentsService: DeploymentsService,
+    private readonly workspacesService: WorkspacesService,
   ) {
     this.kubernetesConfig = this.configService.get<KubernetesConfig>(
       'kubernetes',
@@ -696,7 +700,10 @@ export class KubernetesService {
     return containerMetrics;
   }
 
-  // TODO: add comments
+  /**
+   * Handles the workspace.created event
+   * @param payload the workspace.created event payload
+   */
   @OnEvent(Event.WorkspaceCreated)
   private async handleWorkspaceCreatedEvent(payload: WorkspaceCreatedEvent) {
     const workspaceId: string = payload.workspace._id;
@@ -706,12 +713,19 @@ export class KubernetesService {
       await this.createNetworkPolicy(namespace);
       await this.createRole(namespace, workspaceId);
       await this.createRoleBinding(namespace, workspaceId);
-    } catch (err) {
+    } catch (error) {
       // TODO: handle errors
+      this.logger.error({
+        message: `Error creating a namespace for workspace ${workspaceId}`,
+        error,
+      });
     }
   }
 
-  // TODO: add comments
+  /**
+   * Handles the workspace.deleted event
+   * @param payload the workspace.deleted event payload
+   */
   @OnEvent(Event.WorkspaceDeleted)
   private async handleWorkspaceDeletedEvent(payload: WorkspaceDeletedEvent) {
     try {
@@ -842,21 +856,26 @@ export class KubernetesService {
    * Set up and start the Kubernetes pod informer
    */
   private async startPodInformer(): Promise<void> {
-    // TODO: get all workspaces
-    // TODO: gather all ids, construct namespaces
-    // TODO: for every namespace, do below
-    // const listFn = (): Promise<{
-    //   response: http.IncomingMessage;
-    //   body: k8s.V1PodList;
-    // }> => this.k8sCoreV1Api.listNamespacedPod(this.kubernetesConfig.namespace);
-    // const informer: k8s.Informer<k8s.V1Pod> = k8s.makeInformer(
-    //   this.kc,
-    //   `/api/v1/namespaces/${this.kubernetesConfig.namespace}/pods`,
-    //   listFn,
-    // );
-    // informer.on('update', (pod: k8s.V1Pod) => this.updateDeploymentStatus(pod));
-    // informer.on('error', (pod: k8s.V1Pod) => this.updateDeploymentStatus(pod));
-    // await informer.start();
+    const workspaceNamespaces: WorkspaceNamespace[] = await this.getAllNamespaces();
+    for (const workspaceNamespace of workspaceNamespaces) {
+      const namespace: string = workspaceNamespace.namespace;
+      const listFn = (): Promise<{
+        response: http.IncomingMessage;
+        body: k8s.V1PodList;
+      }> => this.k8sCoreV1Api.listNamespacedPod(namespace);
+      const informer: k8s.Informer<k8s.V1Pod> = k8s.makeInformer(
+        this.kc,
+        `/api/v1/namespaces/${namespace}/pods`,
+        listFn,
+      );
+      informer.on('update', (pod: k8s.V1Pod) =>
+        this.updateDeploymentStatus(pod),
+      );
+      informer.on('error', (pod: k8s.V1Pod) =>
+        this.updateDeploymentStatus(pod),
+      );
+      await informer.start();
+    }
   }
 
   /**
@@ -898,50 +917,53 @@ export class KubernetesService {
    */
   @Cron(CronExpression.EVERY_HOUR)
   private async deleteRemainingKubernetesResourcesJob(): Promise<void> {
-    // TODO: get all workspaces
-    // TODO: gather all ids, construct namespaces
-    // TODO: for every namespace, do below
-    // const storedDeployments: DeploymentDocument[] = await this.deploymentsService.findAll();
-    // const storedDeploymentIds: string[] = storedDeployments.map((d) =>
-    //   d._id.toString(),
-    // );
-    // const {
-    //   body: { items: services },
-    // } = await this.getAllServices();
-    // const {
-    //   body: { items: deployments },
-    // } = await this.getAllDeployments();
-    // const {
-    //   body: { items: persistentVolumeClaims },
-    // } = await this.getAllPersistentVolumeClaims();
-    // const {
-    //   body: { items: secrets },
-    // } = await this.getAllSecrets();
-    // for (const service of services) {
-    //   const deploymentId: string = service?.metadata?.labels?.deployment;
-    //   if (!storedDeploymentIds.includes(deploymentId)) {
-    //     await this.deleteService(deploymentId);
-    //   }
-    // }
-    // for (const deployment of deployments) {
-    //   const deploymentId: string = deployment?.metadata?.labels?.deployment;
-    //   if (!storedDeploymentIds.includes(deploymentId)) {
-    //     await this.deleteDeployment(deploymentId);
-    //   }
-    // }
-    // for (const persistentVolumeClaim of persistentVolumeClaims) {
-    //   const deploymentId: string =
-    //     persistentVolumeClaim?.metadata?.labels?.deployment;
-    //   if (!storedDeploymentIds.includes(deploymentId)) {
-    //     await this.deletePersistentVolumeClaim(deploymentId);
-    //   }
-    // }
-    // for (const secret of secrets) {
-    //   const deploymentId: string = secret?.metadata?.labels?.deployment;
-    //   if (!storedDeploymentIds.includes(deploymentId)) {
-    //     await this.deleteSecret(deploymentId);
-    //   }
-    // }
+    const workspaceNamespaces: WorkspaceNamespace[] = await this.getAllNamespaces();
+    for (const workspaceNamespace of workspaceNamespaces) {
+      const namespace: string = workspaceNamespace.namespace;
+      const storedDeployments: DeploymentDocument[] = await this.deploymentsService.findAll(
+        workspaceNamespace.workspaceId,
+      );
+      const storedDeploymentIds: string[] = storedDeployments.map((d) =>
+        d._id.toString(),
+      );
+      const {
+        body: { items: services },
+      } = await this.getAllServices(namespace);
+      const {
+        body: { items: deployments },
+      } = await this.getAllDeployments(namespace);
+      const {
+        body: { items: persistentVolumeClaims },
+      } = await this.getAllPersistentVolumeClaims(namespace);
+      const {
+        body: { items: secrets },
+      } = await this.getAllSecrets(namespace);
+      for (const service of services) {
+        const deploymentId: string = service?.metadata?.labels?.deployment;
+        if (!storedDeploymentIds.includes(deploymentId)) {
+          await this.deleteService(namespace, deploymentId);
+        }
+      }
+      for (const deployment of deployments) {
+        const deploymentId: string = deployment?.metadata?.labels?.deployment;
+        if (!storedDeploymentIds.includes(deploymentId)) {
+          await this.deleteDeployment(namespace, deploymentId);
+        }
+      }
+      for (const persistentVolumeClaim of persistentVolumeClaims) {
+        const deploymentId: string =
+          persistentVolumeClaim?.metadata?.labels?.deployment;
+        if (!storedDeploymentIds.includes(deploymentId)) {
+          await this.deletePersistentVolumeClaim(namespace, deploymentId);
+        }
+      }
+      for (const secret of secrets) {
+        const deploymentId: string = secret?.metadata?.labels?.deployment;
+        if (!storedDeploymentIds.includes(deploymentId)) {
+          await this.deleteSecret(namespace, deploymentId);
+        }
+      }
+    }
   }
 
   /**
@@ -950,15 +972,15 @@ export class KubernetesService {
    */
   @Cron(CronExpression.EVERY_MINUTE)
   private async updateDeploymentStatusesJob(): Promise<void> {
-    // TODO: get all workspaces
-    // TODO: gather all ids, construct namespaces
-    // TODO: for every namespace, do below
-    // const {
-    //   body: { items: pods },
-    // } = await this.getAllPods();
-    // for (const pod of pods) {
-    //   await this.updateDeploymentStatus(pod);
-    // }
+    const workspaceNamespaces: WorkspaceNamespace[] = await this.getAllNamespaces();
+    for (const workspaceNamespace of workspaceNamespaces) {
+      const {
+        body: { items: pods },
+      } = await this.getAllPods(workspaceNamespace.namespace);
+      for (const pod of pods) {
+        await this.updateDeploymentStatus(pod);
+      }
+    }
   }
 
   /**
@@ -1006,5 +1028,15 @@ export class KubernetesService {
         DeploymentStatus.Failed,
       );
     }
+  }
+
+  /**
+   * Get all workspace namespaces
+   */
+  private async getAllNamespaces(): Promise<WorkspaceNamespace[]> {
+    const workspaces: WorkspaceDocument[] = await this.workspacesService.findAll();
+    return workspaces.map(
+      (w) => new WorkspaceNamespace(w._id, this.generateResourceName(w._id)),
+    );
   }
 }
