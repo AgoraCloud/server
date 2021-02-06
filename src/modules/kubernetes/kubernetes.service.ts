@@ -1,3 +1,5 @@
+import { WorkspaceDeletedEvent } from './../../events/workspace-deleted.event';
+import { WorkspaceCreatedEvent } from './../../events/workspace-created.event';
 import {
   PodConditionType,
   PodConditionReason,
@@ -31,6 +33,8 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 export class KubernetesService {
   private readonly k8sCoreV1Api: k8s.CoreV1Api;
   private readonly k8sAppsV1Api: k8s.AppsV1Api;
+  private readonly k8sNetworkingV1Api: k8s.NetworkingV1Api;
+  private readonly k8sRbacAuthorizationV1Api: k8s.RbacAuthorizationV1Api;
   private readonly kubernetesConfig: KubernetesConfig;
   private readonly resourcePrefix: string = 'agoracloud';
   // TODO: remove after debugging is done
@@ -47,7 +51,70 @@ export class KubernetesService {
     this.kc.loadFromDefault();
     this.k8sCoreV1Api = this.kc.makeApiClient(k8s.CoreV1Api);
     this.k8sAppsV1Api = this.kc.makeApiClient(k8s.AppsV1Api);
+    this.k8sNetworkingV1Api = this.kc.makeApiClient(k8s.NetworkingV1Api);
+    this.k8sRbacAuthorizationV1Api = this.kc.makeApiClient(
+      k8s.RbacAuthorizationV1Api,
+    );
     this.startPodInformer();
+  }
+
+  /**
+   * Create a Kubernetes namespace
+   * @param workspaceId the workspace id
+   */
+  createNamespace(
+    workspaceId: string,
+  ): Promise<{
+    response: http.IncomingMessage;
+    body: k8s.V1Namespace;
+  }> {
+    return this.k8sCoreV1Api.createNamespace({
+      apiVersion: 'v1',
+      kind: 'Namespace',
+      metadata: {
+        name: this.generateResourceName(workspaceId),
+        // TODO: see if this should be a separate method
+        labels: { app: this.resourcePrefix, workspace: workspaceId },
+      },
+    });
+  }
+
+  /**
+   * Delete a Kubernetes namespace
+   * @param workspaceId the workspace id
+   */
+  deleteNamespace(
+    workspaceId: string,
+  ): Promise<{
+    response: http.IncomingMessage;
+    body: k8s.V1Status;
+  }> {
+    return this.k8sCoreV1Api.deleteNamespace(
+      this.generateResourceName(workspaceId),
+    );
+  }
+
+  createNetworkPolicy(): Promise<{
+    response: http.IncomingMessage;
+    body: k8s.V1NetworkPolicy;
+  }> {
+    return this.k8sNetworkingV1Api.createNamespacedNetworkPolicy('', {});
+  }
+
+  createRole(): Promise<{
+    response: http.IncomingMessage;
+    body: k8s.V1Role;
+  }> {
+    return this.k8sRbacAuthorizationV1Api.createNamespacedRole('', {});
+  }
+
+  createRoleBinding(): Promise<{
+    response: http.IncomingMessage;
+    body: k8s.V1RoleBinding;
+  }> {
+    return this.k8sRbacAuthorizationV1Api.createNamespacedRoleBinding('', {
+      roleRef: { apiGroup: '', kind: '', name: '' },
+    });
   }
 
   /**
@@ -527,6 +594,30 @@ export class KubernetesService {
     return containerMetrics;
   }
 
+  // TODO: add comments
+  @OnEvent(Event.WorkspaceCreated)
+  private async handleWorkspaceCreatedEvent(payload: WorkspaceCreatedEvent) {
+    const workspaceId: string = payload.workspace._id;
+    try {
+      await this.createNamespace(workspaceId);
+      await this.createNetworkPolicy();
+      await this.createRole();
+      await this.createRoleBinding();
+    } catch (err) {
+      // TODO: handle errors
+    }
+  }
+
+  // TODO: add comments
+  @OnEvent(Event.WorkspaceDeleted)
+  private async handleWorkspaceDeletedEvent(payload: WorkspaceDeletedEvent) {
+    try {
+      await this.deleteNamespace(payload.id);
+    } catch (err) {
+      // TODO: do nothing, this will get picked up by the scheduler
+    }
+  }
+
   /**
    * Handles the deployment.created event
    * @param payload the deployment.created event payload
@@ -659,10 +750,10 @@ export class KubernetesService {
 
   /**
    * Generates the name for any Kubernetes resource
-   * @param deploymentId the deployment id
+   * @param id the id of the resource
    */
-  private generateResourceName(deploymentId: string): string {
-    return `${this.resourcePrefix}-${deploymentId}`;
+  private generateResourceName(id: string): string {
+    return `${this.resourcePrefix}-${id}`;
   }
 
   /**

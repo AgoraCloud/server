@@ -225,8 +225,13 @@ export class DeploymentsService {
    * Delete all deployments for the given workspace
    * @param workspaceId the workspace id
    * @param userId the users id
+   * @param emitEvents controls whether the deployment.deleted event should be fired
    */
-  private async removeAll(workspaceId: string, userId?: string): Promise<void> {
+  private async removeAll(
+    workspaceId: string,
+    userId?: string,
+    emitEvents = false,
+  ): Promise<void> {
     const deployments: DeploymentDocument[] = await this.findAll(
       workspaceId,
       userId,
@@ -237,12 +242,14 @@ export class DeploymentsService {
       .where('_id')
       .in(deploymentIds)
       .exec();
-    deployments.forEach((deployment: DeploymentDocument) => {
-      this.eventEmitter.emit(
-        Event.DeploymentDeleted,
-        new DeploymentDeletedEvent(deployment),
-      );
-    });
+    if (emitEvents) {
+      deployments.forEach((deployment: DeploymentDocument) => {
+        this.eventEmitter.emit(
+          Event.DeploymentDeleted,
+          new DeploymentDeletedEvent(deployment),
+        );
+      });
+    }
   }
 
   /**
@@ -264,6 +271,6 @@ export class DeploymentsService {
   private async handleWorkspaceUserRemoved(
     payload: WorkspaceUserRemovedEvent,
   ): Promise<void> {
-    await this.removeAll(payload.workspaceId, payload.userId);
+    await this.removeAll(payload.workspaceId, payload.userId, true);
   }
 }

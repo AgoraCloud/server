@@ -1,3 +1,4 @@
+import { WorkspaceCreatedEvent } from './../../events/workspace-created.event';
 import { WorkspaceUserRemovedEvent } from './../../events/workspace-user-removed.event';
 import { UserDeletedEvent } from './../../events/user-deleted.event';
 import { WorkspaceDeletedEvent } from '../../events/workspace-deleted.event';
@@ -25,15 +26,20 @@ export class WorkspacesService {
    * @param user the user
    * @param createWorkspaceDto the workspace to create
    */
-  create(
+  async create(
     user: UserDocument,
     createWorkspaceDto: CreateWorkspaceDto,
   ): Promise<WorkspaceDocument> {
-    const createdWorkspace: WorkspaceDocument = new this.workspaceModel(
-      createWorkspaceDto,
+    const workspace: Workspace = new Workspace(createWorkspaceDto);
+    workspace.users = [user._id];
+    const createdWorkspace: WorkspaceDocument = await this.workspaceModel.create(
+      workspace,
     );
-    createdWorkspace.users = [user._id];
-    return createdWorkspace.save();
+    this.eventEmitter.emit(
+      Event.WorkspaceCreated,
+      new WorkspaceCreatedEvent(createdWorkspace),
+    );
+    return createdWorkspace;
   }
 
   /**
