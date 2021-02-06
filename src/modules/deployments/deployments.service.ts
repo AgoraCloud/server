@@ -172,7 +172,11 @@ export class DeploymentsService {
     ) {
       this.eventEmitter.emit(
         Event.DeploymentUpdated,
-        new DeploymentUpdatedEvent(deploymentId, updateDeploymentDto),
+        new DeploymentUpdatedEvent(
+          workspaceId,
+          deploymentId,
+          updateDeploymentDto,
+        ),
       );
     }
     return deployment;

@@ -18,14 +18,18 @@ export class KubernetesController {
   constructor(private readonly kubernetesService: KubernetesService) {}
 
   @Get('logs')
-  findOneLogs(@Param('deploymentId') deploymentId: string): Promise<string> {
-    return this.kubernetesService.getPodLogs(deploymentId);
+  findOneLogs(
+    @Param('workspaceId') workspaceId: string,
+    @Param('deploymentId') deploymentId: string,
+  ): Promise<string> {
+    return this.kubernetesService.getPodLogs(workspaceId, deploymentId);
   }
 
   @Get('metrics')
   findOneMetrics(
+    @Param('workspaceId') workspaceId: string,
     @Param('deploymentId') deploymentId: string,
   ): Promise<DeploymentMetricsDto> {
-    return this.kubernetesService.getPodMetrics(deploymentId);
+    return this.kubernetesService.getPodMetrics(workspaceId, deploymentId);
   }
 }

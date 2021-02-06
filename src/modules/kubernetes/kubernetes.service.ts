@@ -60,9 +60,11 @@ export class KubernetesService {
 
   /**
    * Create a Kubernetes namespace
+   * @param name the name of the namespace
    * @param workspaceId the workspace id
    */
   createNamespace(
+    name: string,
     workspaceId: string,
   ): Promise<{
     response: http.IncomingMessage;
@@ -72,51 +74,53 @@ export class KubernetesService {
       apiVersion: 'v1',
       kind: 'Namespace',
       metadata: {
-        name: this.generateResourceName(workspaceId),
-        // TODO: see if this should be a separate method
-        labels: { app: this.resourcePrefix, workspace: workspaceId },
+        name,
+        labels: this.generateWorkspaceLabels(workspaceId),
       },
     });
   }
 
   /**
    * Delete a Kubernetes namespace
-   * @param workspaceId the workspace id
+   * @param name The name of the namespace
    */
   deleteNamespace(
-    workspaceId: string,
+    name: string,
   ): Promise<{
     response: http.IncomingMessage;
     body: k8s.V1Status;
   }> {
-    return this.k8sCoreV1Api.deleteNamespace(
-      this.generateResourceName(workspaceId),
-    );
+    return this.k8sCoreV1Api.deleteNamespace(name);
   }
 
   // TODO: finish this method
-  createNetworkPolicy(): Promise<{
+  createNetworkPolicy(
+    namespace: string,
+  ): Promise<{
     response: http.IncomingMessage;
     body: k8s.V1NetworkPolicy;
   }> {
-    return this.k8sNetworkingV1Api.createNamespacedNetworkPolicy('', {});
+    return this.k8sNetworkingV1Api.createNamespacedNetworkPolicy(namespace, {});
   }
 
-  // TODO: finish this method
+  /**
+   * Create a Kubernetes role
+   * @param namespace the Kubernetes namespace
+   * @param workspaceId the workspace id
+   */
   createRole(
+    namespace: string,
     workspaceId: string,
   ): Promise<{
     response: http.IncomingMessage;
     body: k8s.V1Role;
   }> {
-    const resourceName: string = this.generateResourceName(workspaceId);
-    return this.k8sRbacAuthorizationV1Api.createNamespacedRole(resourceName, {
+    return this.k8sRbacAuthorizationV1Api.createNamespacedRole(namespace, {
       apiVersion: 'rbac.authorization.k8s.io/v1',
       kind: 'Role',
       metadata: {
-        name: resourceName,
-        // TODO: see if this should be a separate method
-        labels: { app: this.resourcePrefix, workspace: workspaceId },
+        name: this.generateResourceName(workspaceId),
+        labels: this.generateWorkspaceLabels(workspaceId),
       },
       rules: [
         {
@@ -145,28 +149,32 @@ export class KubernetesService {
     });
   }
 
-  // TODO: finish this method
+  /**
+   * Create a Kubernetes role binding
+   * @param namespace the Kubernetes namespace
+   * @param workspaceId the workspace id
+   */
   createRoleBinding(
+    namespace: string,
     workspaceId: string,
   ): Promise<{
     response: http.IncomingMessage;
     body: k8s.V1RoleBinding;
   }> {
-    const resourceName: string = this.generateResourceName(workspaceId);
+    const name: string = this.generateResourceName(workspaceId);
     return this.k8sRbacAuthorizationV1Api.createNamespacedRoleBinding(
-      resourceName,
+      namespace,
       {
         apiVersion: 'rbac.authorization.k8s.io/v1',
         kind: 'RoleBinding',
         metadata: {
-          name: resourceName,
-          // TODO: see if this should be a separate method
-          labels: { app: this.resourcePrefix, workspace: workspaceId },
+          name,
+          labels: this.generateWorkspaceLabels(workspaceId),
         },
         roleRef: {
           apiGroup: 'rbac.authorization.k8s.io',
           kind: 'Role',
-          name: resourceName,
+          name,
         },
         subjects: [
           {
@@ -181,13 +189,16 @@ export class KubernetesService {
 
   /**
    * Get all Kubernetes secrets
+   * @param namespace the Kubernetes namespace
    */
-  private getAllSecrets(): Promise<{
+  private getAllSecrets(
+    namespace: string,
+  ): Promise<{
     response: http.IncomingMessage;
     body: k8s.V1SecretList;
   }> {
     return this.k8sCoreV1Api.listNamespacedSecret(
-      this.kubernetesConfig.namespace,
+      namespace,
       undefined,
       undefined,
       undefined,
@@ -198,38 +209,38 @@ export class KubernetesService {
 
   /**
    * Create a Kubernetes secret
+   * @param namespace the Kubernetes namespace
    * @param deploymentId the deployment id
    * @param sudoPassword the deployment container sudo password
    */
   private createSecret(
+    namespace: string,
     deploymentId: string,
     sudoPassword: string,
   ): Promise<{
     response: http.IncomingMessage;
     body: k8s.V1Secret;
   }> {
-    return this.k8sCoreV1Api.createNamespacedSecret(
-      this.kubernetesConfig.namespace,
-      {
-        apiVersion: 'v1',
-        kind: 'Secret',
-        metadata: {
-          name: this.generateResourceName(deploymentId),
-          namespace: this.kubernetesConfig.namespace,
-          labels: this.generateLabels(deploymentId),
-        },
-        data: {
-          sudo_password: this.toBase64(sudoPassword),
-        },
+    return this.k8sCoreV1Api.createNamespacedSecret(namespace, {
+      apiVersion: 'v1',
+      kind: 'Secret',
+      metadata: {
+        name: this.generateResourceName(deploymentId),
+        labels: this.generateDeploymentLabels(deploymentId),
       },
-    );
+      data: {
+        sudo_password: this.toBase64(sudoPassword),
+      },
+    });
   }
 
   /**
    * Delete a Kubernetes secret
+   * @param namespace the Kubernetes namespace
    * @param deploymentId the deployment id
    */
   private deleteSecret(
+    namespace: string,
     deploymentId: string,
   ): Promise<{
     response: http.IncomingMessage;
@@ -237,19 +248,22 @@ export class KubernetesService {
   }> {
     return this.k8sCoreV1Api.deleteNamespacedSecret(
       this.generateResourceName(deploymentId),
-      this.kubernetesConfig.namespace,
+      namespace,
     );
   }
 
   /**
    * Get all Kubernetes persistent volume claims
+   * @param namespace the Kubernetes namespace
    */
-  private getAllPersistentVolumeClaims(): Promise<{
+  private getAllPersistentVolumeClaims(
+    namespace: string,
+  ): Promise<{
     response: http.IncomingMessage;
     body: k8s.V1PersistentVolumeClaimList;
   }> {
     return this.k8sCoreV1Api.listNamespacedPersistentVolumeClaim(
-      this.kubernetesConfig.namespace,
+      namespace,
       undefined,
       undefined,
       undefined,
@@ -260,44 +274,44 @@ export class KubernetesService {
 
   /**
    * Create a Kubernetes persistent volume claim
+   * @param namespace the Kubernetes namespace
    * @param deploymentId the deployment id
    * @param storageCount the persistent volume claim storage size
    */
   private createPersistentVolumeClaim(
+    namespace: string,
     deploymentId: string,
     storageCount: number,
   ): Promise<{
     response: http.IncomingMessage;
     body: k8s.V1PersistentVolumeClaim;
   }> {
-    return this.k8sCoreV1Api.createNamespacedPersistentVolumeClaim(
-      this.kubernetesConfig.namespace,
-      {
-        apiVersion: 'v1',
-        kind: 'PersistentVolumeClaim',
-        metadata: {
-          name: this.generateResourceName(deploymentId),
-          namespace: this.kubernetesConfig.namespace,
-          labels: this.generateLabels(deploymentId),
-        },
-        spec: {
-          accessModes: ['ReadWriteOnce'],
-          storageClassName: this.kubernetesConfig.storageClass,
-          resources: {
-            requests: {
-              storage: `${storageCount}Gi`,
-            },
+    return this.k8sCoreV1Api.createNamespacedPersistentVolumeClaim(namespace, {
+      apiVersion: 'v1',
+      kind: 'PersistentVolumeClaim',
+      metadata: {
+        name: this.generateResourceName(deploymentId),
+        labels: this.generateDeploymentLabels(deploymentId),
+      },
+      spec: {
+        accessModes: ['ReadWriteOnce'],
+        storageClassName: this.kubernetesConfig.storageClass,
+        resources: {
+          requests: {
+            storage: `${storageCount}Gi`,
           },
         },
       },
-    );
+    });
   }
 
   /**
    * Delete a Kubernetes persistent volume claim
+   * @param namespace the Kubernetes namespace
    * @param deploymentId the deployment id
    */
   private deletePersistentVolumeClaim(
+    namespace: string,
     deploymentId: string,
   ): Promise<{
     response: http.IncomingMessage;
@@ -305,19 +319,22 @@ export class KubernetesService {
   }> {
     return this.k8sCoreV1Api.deleteNamespacedPersistentVolumeClaim(
       this.generateResourceName(deploymentId),
-      this.kubernetesConfig.namespace,
+      namespace,
     );
   }
 
   /**
    * Get all Kubernetes services
+   * @param namespace the Kubernetes namespace
    */
-  private getAllServices(): Promise<{
+  private getAllServices(
+    namespace: string,
+  ): Promise<{
     response: http.IncomingMessage;
     body: k8s.V1ServiceList;
   }> {
     return this.k8sCoreV1Api.listNamespacedService(
-      this.kubernetesConfig.namespace,
+      namespace,
       undefined,
       undefined,
       undefined,
@@ -328,44 +345,46 @@ export class KubernetesService {
 
   /**
    * Create a Kubernetes service
+   * @param namespace the Kubernetes namespace
    * @param deploymentId the deployment id
    */
   private createService(
+    namespace: string,
     deploymentId: string,
   ): Promise<{
     response: http.IncomingMessage;
     body: k8s.V1Service;
   }> {
-    const labels: { [key: string]: string } = this.generateLabels(deploymentId);
-    return this.k8sCoreV1Api.createNamespacedService(
-      this.kubernetesConfig.namespace,
-      {
-        apiVersion: 'v1',
-        kind: 'Service',
-        metadata: {
-          name: this.generateResourceName(deploymentId),
-          namespace: this.kubernetesConfig.namespace,
-          labels,
-        },
-        spec: {
-          type: 'ClusterIP',
-          ports: [
-            {
-              port: 80,
-              targetPort: new Number(8443),
-            },
-          ],
-          selector: labels,
-        },
-      },
+    const labels: { [key: string]: string } = this.generateDeploymentLabels(
+      deploymentId,
     );
+    return this.k8sCoreV1Api.createNamespacedService(namespace, {
+      apiVersion: 'v1',
+      kind: 'Service',
+      metadata: {
+        name: this.generateResourceName(deploymentId),
+        labels,
+      },
+      spec: {
+        type: 'ClusterIP',
+        ports: [
+          {
+            port: 80,
+            targetPort: new Number(8443),
+          },
+        ],
+        selector: labels,
+      },
+    });
   }
 
   /**
    * Delete a Kubernetes service
+   * @param namespace the Kubernetes namespace
    * @param deploymentId the deployment id
    */
   private deleteService(
+    namespace: string,
     deploymentId: string,
   ): Promise<{
     response: http.IncomingMessage;
@@ -373,19 +392,22 @@ export class KubernetesService {
   }> {
     return this.k8sCoreV1Api.deleteNamespacedService(
       this.generateResourceName(deploymentId),
-      this.kubernetesConfig.namespace,
+      namespace,
     );
   }
 
   /**
    * Get all Kubernetes deployments
+   * @param namespace the Kubernetes namespace
    */
-  private getAllDeployments(): Promise<{
+  private getAllDeployments(
+    namespace: string,
+  ): Promise<{
     response: http.IncomingMessage;
     body: k8s.V1DeploymentList;
   }> {
     return this.k8sAppsV1Api.listNamespacedDeployment(
-      this.kubernetesConfig.namespace,
+      namespace,
       undefined,
       undefined,
       undefined,
@@ -396,17 +418,21 @@ export class KubernetesService {
 
   /**
    * Create a Kubernetes deployment
+   * @param namespace the Kubernetes namespace
    * @param deploymentId the deployment id
    * @param deploymentProperties the deployment properties
    */
   private createDeployment(
+    namespace: string,
     deploymentId: string,
     deploymentProperties: DeploymentProperties,
   ): Promise<{
     response: http.IncomingMessage;
     body: k8s.V1Deployment;
   }> {
-    const labels: { [key: string]: string } = this.generateLabels(deploymentId);
+    const labels: { [key: string]: string } = this.generateDeploymentLabels(
+      deploymentId,
+    );
     const resourceName: string = this.generateResourceName(deploymentId);
     const volumes: k8s.V1Volume[] = [];
     const volumeMounts: k8s.V1VolumeMount[] = [];
@@ -423,80 +449,78 @@ export class KubernetesService {
       });
     }
 
-    return this.k8sAppsV1Api.createNamespacedDeployment(
-      this.kubernetesConfig.namespace,
-      {
-        apiVersion: 'apps/v1',
-        kind: 'Deployment',
-        metadata: {
-          name: resourceName,
-          namespace: this.kubernetesConfig.namespace,
-          labels,
+    return this.k8sAppsV1Api.createNamespacedDeployment(namespace, {
+      apiVersion: 'apps/v1',
+      kind: 'Deployment',
+      metadata: {
+        name: resourceName,
+        labels,
+      },
+      spec: {
+        replicas: 1,
+        strategy: {
+          type: 'Recreate',
         },
-        spec: {
-          replicas: 1,
-          strategy: {
-            type: 'Recreate',
+        selector: {
+          matchLabels: labels,
+        },
+        template: {
+          metadata: {
+            labels,
           },
-          selector: {
-            matchLabels: labels,
-          },
-          template: {
-            metadata: {
-              labels,
-            },
-            spec: {
-              volumes,
-              containers: [
-                {
-                  name: resourceName,
-                  image: `${deploymentProperties.image.name}:${deploymentProperties.image.tag}`,
-                  imagePullPolicy: 'Always',
-                  resources: {
-                    limits: {
-                      memory: `${deploymentProperties.resources.memoryCount}Gi`,
-                      cpu: `${deploymentProperties.resources.cpuCount}`,
-                    },
-                  },
-                  env: [
-                    {
-                      name: 'SUDO_PASSWORD',
-                      valueFrom: {
-                        secretKeyRef: {
-                          name: resourceName,
-                          key: 'sudo_password',
-                        },
-                      },
-                    },
-                  ],
-                  volumeMounts,
-                  livenessProbe: {
-                    httpGet: {
-                      path: '/',
-                      port: new Number(8443),
-                    },
-                  },
-                  readinessProbe: {
-                    httpGet: {
-                      path: '/',
-                      port: new Number(8443),
-                    },
+          spec: {
+            volumes,
+            containers: [
+              {
+                name: resourceName,
+                image: `${deploymentProperties.image.name}:${deploymentProperties.image.tag}`,
+                imagePullPolicy: 'Always',
+                resources: {
+                  limits: {
+                    memory: `${deploymentProperties.resources.memoryCount}Gi`,
+                    cpu: `${deploymentProperties.resources.cpuCount}`,
                   },
                 },
-              ],
-            },
+                env: [
+                  {
+                    name: 'SUDO_PASSWORD',
+                    valueFrom: {
+                      secretKeyRef: {
+                        name: resourceName,
+                        key: 'sudo_password',
+                      },
+                    },
+                  },
+                ],
+                volumeMounts,
+                livenessProbe: {
+                  httpGet: {
+                    path: '/',
+                    port: new Number(8443),
+                  },
+                },
+                readinessProbe: {
+                  httpGet: {
+                    path: '/',
+                    port: new Number(8443),
+                  },
+                },
+              },
+            ],
           },
         },
       },
-    );
+    });
   }
 
   /**
    * Update a Kubernetes deployment
+   * @param namespace the Kubernetes namespace
    * @param deploymentId the deployment id
    * @param updatedResources the updated deployment resources
    */
   private updateDeployment(
+    namespace: string,
     deploymentId: string,
     updatedResources: UpdateDeploymentResourcesDto,
   ): Promise<{
@@ -515,7 +539,7 @@ export class KubernetesService {
 
     return this.k8sAppsV1Api.patchNamespacedDeployment(
       resourceName,
-      this.kubernetesConfig.namespace,
+      namespace,
       {
         spec: {
           template: {
@@ -544,9 +568,11 @@ export class KubernetesService {
 
   /**
    * Delete a Kubernetes deployment
+   * @param namespace the Kubernetes namespace
    * @param deploymentId the deployment id
    */
   private deleteDeployment(
+    namespace: string,
     deploymentId: string,
   ): Promise<{
     response: http.IncomingMessage;
@@ -554,19 +580,22 @@ export class KubernetesService {
   }> {
     return this.k8sAppsV1Api.deleteNamespacedDeployment(
       this.generateResourceName(deploymentId),
-      this.kubernetesConfig.namespace,
+      namespace,
     );
   }
 
   /**
    * Get all Kubernetes pods
+   * @param namespace the Kubernetes namespace
    */
-  private async getAllPods(): Promise<{
+  private async getAllPods(
+    namespace: string,
+  ): Promise<{
     response: http.IncomingMessage;
     body: k8s.V1PodList;
   }> {
     return this.k8sCoreV1Api.listNamespacedPod(
-      this.kubernetesConfig.namespace,
+      namespace,
       undefined,
       undefined,
       undefined,
@@ -577,13 +606,17 @@ export class KubernetesService {
 
   /**
    * Get a Kubernetes pod
+   * @param namespace the Kubernetes namespace
    * @param deploymentId the pods deployment id
    */
-  private async getPod(deploymentId: string): Promise<k8s.V1Pod> {
+  private async getPod(
+    namespace: string,
+    deploymentId: string,
+  ): Promise<k8s.V1Pod> {
     // Get all pods
     const {
       body: { items: pods },
-    } = await this.getAllPods();
+    } = await this.getAllPods(namespace);
     // Filter the pods by the deployment label
     const podIndex: number = pods.findIndex(
       (p) =>
@@ -597,23 +630,30 @@ export class KubernetesService {
 
   /**
    * Get a Kubernetes pod logs
+   * @param workspaceId the pods workspace id
    * @param deploymentId the pods deployment id
    */
-  async getPodLogs(deploymentId: string): Promise<string> {
-    const pod: k8s.V1Pod = await this.getPod(deploymentId);
+  async getPodLogs(workspaceId: string, deploymentId: string): Promise<string> {
+    const namespace: string = this.generateResourceName(workspaceId);
+    const pod: k8s.V1Pod = await this.getPod(namespace, deploymentId);
     const { body } = await this.k8sCoreV1Api.readNamespacedPodLog(
       pod.metadata.name,
-      this.kubernetesConfig.namespace,
+      namespace,
     );
     return body;
   }
 
   /**
    * Get a Kubernetes pod metrics
+   * @param workspaceId the pods workspace id
    * @param deploymentId the pods deployment id
    */
-  async getPodMetrics(deploymentId: string): Promise<DeploymentMetricsDto> {
-    const pod: k8s.V1Pod = await this.getPod(deploymentId);
+  async getPodMetrics(
+    workspaceId: string,
+    deploymentId: string,
+  ): Promise<DeploymentMetricsDto> {
+    const namespace: string = this.generateResourceName(workspaceId);
+    const pod: k8s.V1Pod = await this.getPod(namespace, deploymentId);
     const opts: request.Options = {
       url: '',
     };
@@ -622,9 +662,9 @@ export class KubernetesService {
       request.get(
         `${
           this.kc.getCurrentCluster().server
-        }/apis/metrics.k8s.io/v1beta1/namespaces/${
-          this.kubernetesConfig.namespace
-        }/pods/${pod.metadata.name}`,
+        }/apis/metrics.k8s.io/v1beta1/namespaces/${namespace}/pods/${
+          pod.metadata.name
+        }`,
         opts,
         (error, response, body) => {
           if (error) reject(error);
@@ -660,11 +700,12 @@ export class KubernetesService {
   @OnEvent(Event.WorkspaceCreated)
   private async handleWorkspaceCreatedEvent(payload: WorkspaceCreatedEvent) {
     const workspaceId: string = payload.workspace._id;
+    const namespace: string = this.generateResourceName(workspaceId);
     try {
-      await this.createNamespace(workspaceId);
-      await this.createNetworkPolicy();
-      await this.createRole(workspaceId);
-      await this.createRoleBinding(workspaceId);
+      await this.createNamespace(namespace, workspaceId);
+      await this.createNetworkPolicy(namespace);
+      await this.createRole(namespace, workspaceId);
+      await this.createRoleBinding(namespace, workspaceId);
     } catch (err) {
       // TODO: handle errors
     }
@@ -674,7 +715,8 @@ export class KubernetesService {
   @OnEvent(Event.WorkspaceDeleted)
   private async handleWorkspaceDeletedEvent(payload: WorkspaceDeletedEvent) {
     try {
-      await this.deleteNamespace(payload.id);
+      const namespace: string = this.generateResourceName(payload.id);
+      await this.deleteNamespace(namespace);
     } catch (err) {
       // TODO: do nothing, this will get picked up by the scheduler
     }
@@ -688,6 +730,9 @@ export class KubernetesService {
   private async handleDeploymentCreatedEvent(
     payload: DeploymentCreatedEvent,
   ): Promise<void> {
+    const namespace: string = this.generateResourceName(
+      payload.deployment.workspace._id,
+    );
     const deploymentId: string = payload.deployment._id;
     const storageCount = payload.deployment.properties.resources.storageCount;
     await this.deploymentsService.updateStatus(
@@ -696,12 +741,20 @@ export class KubernetesService {
     );
 
     try {
-      await this.createSecret(deploymentId, payload.sudoPassword);
-      await this.createService(deploymentId);
+      await this.createSecret(namespace, deploymentId, payload.sudoPassword);
+      await this.createService(namespace, deploymentId);
       if (storageCount) {
-        await this.createPersistentVolumeClaim(deploymentId, storageCount);
+        await this.createPersistentVolumeClaim(
+          namespace,
+          deploymentId,
+          storageCount,
+        );
       }
-      await this.createDeployment(deploymentId, payload.deployment.properties);
+      await this.createDeployment(
+        namespace,
+        deploymentId,
+        payload.deployment.properties,
+      );
     } catch (error) {
       // TODO: add a message to the deployment to indicate failure reason
       // TODO: retry creation based on the creation failure reason
@@ -724,6 +777,7 @@ export class KubernetesService {
   private async handleDeploymentUpdatedEvent(
     payload: DeploymentUpdatedEvent,
   ): Promise<void> {
+    const namespace: string = this.generateResourceName(payload.workspaceId);
     const deploymentId: string = payload.deploymentId;
     await this.deploymentsService.updateStatus(
       deploymentId,
@@ -731,6 +785,7 @@ export class KubernetesService {
     );
     try {
       await this.updateDeployment(
+        namespace,
         deploymentId,
         payload.updateDeploymentDto.properties.resources,
       );
@@ -755,14 +810,17 @@ export class KubernetesService {
   private async handleDeploymentDeletedEvent(
     payload: DeploymentDeletedEvent,
   ): Promise<void> {
+    const namespace: string = this.generateResourceName(
+      payload.deployment.workspace._id,
+    );
     const deploymentId: string = payload.deployment._id;
     try {
-      await this.deleteService(deploymentId);
-      await this.deleteDeployment(deploymentId);
+      await this.deleteService(namespace, deploymentId);
+      await this.deleteDeployment(namespace, deploymentId);
       if (payload.deployment.properties.resources.storageCount) {
-        await this.deletePersistentVolumeClaim(deploymentId);
+        await this.deletePersistentVolumeClaim(namespace, deploymentId);
       }
-      await this.deleteSecret(deploymentId);
+      await this.deleteSecret(namespace, deploymentId);
     } catch (error) {
       // TODO: handle deletion failure
       this.logger.error({
@@ -784,30 +842,45 @@ export class KubernetesService {
    * Set up and start the Kubernetes pod informer
    */
   private async startPodInformer(): Promise<void> {
-    const listFn = (): Promise<{
-      response: http.IncomingMessage;
-      body: k8s.V1PodList;
-    }> => this.k8sCoreV1Api.listNamespacedPod(this.kubernetesConfig.namespace);
-    const informer: k8s.Informer<k8s.V1Pod> = k8s.makeInformer(
-      this.kc,
-      `/api/v1/namespaces/${this.kubernetesConfig.namespace}/pods`,
-      listFn,
-    );
-    informer.on('update', (pod: k8s.V1Pod) => this.updateDeploymentStatus(pod));
-    informer.on('error', (pod: k8s.V1Pod) => this.updateDeploymentStatus(pod));
-    await informer.start();
+    // TODO: get all workspaces
+    // TODO: gather all ids, construct namespaces
+    // TODO: for every namespace, do below
+    // const listFn = (): Promise<{
+    //   response: http.IncomingMessage;
+    //   body: k8s.V1PodList;
+    // }> => this.k8sCoreV1Api.listNamespacedPod(this.kubernetesConfig.namespace);
+    // const informer: k8s.Informer<k8s.V1Pod> = k8s.makeInformer(
+    //   this.kc,
+    //   `/api/v1/namespaces/${this.kubernetesConfig.namespace}/pods`,
+    //   listFn,
+    // );
+    // informer.on('update', (pod: k8s.V1Pod) => this.updateDeploymentStatus(pod));
+    // informer.on('error', (pod: k8s.V1Pod) => this.updateDeploymentStatus(pod));
+    // await informer.start();
   }
 
   /**
-   * Generates labels for all Kubernetes resources
+   * Generates labels for all Kubernetes resources for an AgoraCloud deployment
    * @param deploymentId the deployment id
    */
-  private generateLabels(
+  private generateDeploymentLabels(
     deploymentId: string,
   ): {
     [key: string]: string;
   } {
     return { app: this.resourcePrefix, deployment: deploymentId };
+  }
+
+  /**
+   * Generates labels for all Kubernetes resources for an AgoraCloud workspace
+   * @param workspaceId the workspace id
+   */
+  private generateWorkspaceLabels(
+    workspaceId: string,
+  ): {
+    [key: string]: string;
+  } {
+    return { app: this.resourcePrefix, workspace: workspaceId };
   }
 
   /**
@@ -825,47 +898,50 @@ export class KubernetesService {
    */
   @Cron(CronExpression.EVERY_HOUR)
   private async deleteRemainingKubernetesResourcesJob(): Promise<void> {
-    const storedDeployments: DeploymentDocument[] = await this.deploymentsService.findAll();
-    const storedDeploymentIds: string[] = storedDeployments.map((d) =>
-      d._id.toString(),
-    );
-    const {
-      body: { items: services },
-    } = await this.getAllServices();
-    const {
-      body: { items: deployments },
-    } = await this.getAllDeployments();
-    const {
-      body: { items: persistentVolumeClaims },
-    } = await this.getAllPersistentVolumeClaims();
-    const {
-      body: { items: secrets },
-    } = await this.getAllSecrets();
-    for (const service of services) {
-      const deploymentId: string = service?.metadata?.labels?.deployment;
-      if (!storedDeploymentIds.includes(deploymentId)) {
-        await this.deleteService(deploymentId);
-      }
-    }
-    for (const deployment of deployments) {
-      const deploymentId: string = deployment?.metadata?.labels?.deployment;
-      if (!storedDeploymentIds.includes(deploymentId)) {
-        await this.deleteDeployment(deploymentId);
-      }
-    }
-    for (const persistentVolumeClaim of persistentVolumeClaims) {
-      const deploymentId: string =
-        persistentVolumeClaim?.metadata?.labels?.deployment;
-      if (!storedDeploymentIds.includes(deploymentId)) {
-        await this.deletePersistentVolumeClaim(deploymentId);
-      }
-    }
-    for (const secret of secrets) {
-      const deploymentId: string = secret?.metadata?.labels?.deployment;
-      if (!storedDeploymentIds.includes(deploymentId)) {
-        await this.deleteSecret(deploymentId);
-      }
-    }
+    // TODO: get all workspaces
+    // TODO: gather all ids, construct namespaces
+    // TODO: for every namespace, do below
+    // const storedDeployments: DeploymentDocument[] = await this.deploymentsService.findAll();
+    // const storedDeploymentIds: string[] = storedDeployments.map((d) =>
+    //   d._id.toString(),
+    // );
+    // const {
+    //   body: { items: services },
+    // } = await this.getAllServices();
+    // const {
+    //   body: { items: deployments },
+    // } = await this.getAllDeployments();
+    // const {
+    //   body: { items: persistentVolumeClaims },
+    // } = await this.getAllPersistentVolumeClaims();
+    // const {
+    //   body: { items: secrets },
+    // } = await this.getAllSecrets();
+    // for (const service of services) {
+    //   const deploymentId: string = service?.metadata?.labels?.deployment;
+    //   if (!storedDeploymentIds.includes(deploymentId)) {
+    //     await this.deleteService(deploymentId);
+    //   }
+    // }
+    // for (const deployment of deployments) {
+    //   const deploymentId: string = deployment?.metadata?.labels?.deployment;
+    //   if (!storedDeploymentIds.includes(deploymentId)) {
+    //     await this.deleteDeployment(deploymentId);
+    //   }
+    // }
+    // for (const persistentVolumeClaim of persistentVolumeClaims) {
+    //   const deploymentId: string =
+    //     persistentVolumeClaim?.metadata?.labels?.deployment;
+    //   if (!storedDeploymentIds.includes(deploymentId)) {
+    //     await this.deletePersistentVolumeClaim(deploymentId);
+    //   }
+    // }
+    // for (const secret of secrets) {
+    //   const deploymentId: string = secret?.metadata?.labels?.deployment;
+    //   if (!storedDeploymentIds.includes(deploymentId)) {
+    //     await this.deleteSecret(deploymentId);
+    //   }
+    // }
   }
 
   /**
@@ -874,12 +950,15 @@ export class KubernetesService {
    */
   @Cron(CronExpression.EVERY_MINUTE)
   private async updateDeploymentStatusesJob(): Promise<void> {
-    const {
-      body: { items: pods },
-    } = await this.getAllPods();
-    for (const pod of pods) {
-      await this.updateDeploymentStatus(pod);
-    }
+    // TODO: get all workspaces
+    // TODO: gather all ids, construct namespaces
+    // TODO: for every namespace, do below
+    // const {
+    //   body: { items: pods },
+    // } = await this.getAllPods();
+    // for (const pod of pods) {
+    //   await this.updateDeploymentStatus(pod);
+    // }
   }
 
   /**
