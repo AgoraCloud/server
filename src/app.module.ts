@@ -39,8 +39,9 @@ import { HealthModule } from './modules/health/health.module';
         SMTP_SECURE: Joi.boolean().required(),
         SMTP_USERNAME: Joi.string().required(),
         SMTP_PASSWORD: Joi.string().required(),
-        KUBERNETES_NAMESPACE: Joi.string().default('agoracloud'),
-        KUBERNETES_STORAGE_CLASS: Joi.string().default('default'),
+        KUBERNETES_NAMESPACE: Joi.string().required(),
+        KUBERNETES_STORAGE_CLASS: Joi.string().required(),
+        KUBERNETES_SERVICE_ACCOUNT: Joi.string().required(),
       }),
     }),
     MongooseModule.forRootAsync({

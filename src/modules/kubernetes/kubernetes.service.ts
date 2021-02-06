@@ -94,6 +94,7 @@ export class KubernetesService {
     );
   }
 
+  // TODO: finish this method
   createNetworkPolicy(): Promise<{
     response: http.IncomingMessage;
     body: k8s.V1NetworkPolicy;
@@ -101,20 +102,81 @@ export class KubernetesService {
     return this.k8sNetworkingV1Api.createNamespacedNetworkPolicy('', {});
   }
 
-  createRole(): Promise<{
+  // TODO: finish this method
+  createRole(
+    workspaceId: string,
+  ): Promise<{
     response: http.IncomingMessage;
     body: k8s.V1Role;
   }> {
-    return this.k8sRbacAuthorizationV1Api.createNamespacedRole('', {});
+    const resourceName: string = this.generateResourceName(workspaceId);
+    return this.k8sRbacAuthorizationV1Api.createNamespacedRole(resourceName, {
+      apiVersion: 'rbac.authorization.k8s.io/v1',
+      kind: 'Role',
+      metadata: {
+        name: resourceName,
+        // TODO: see if this should be a separate method
+        labels: { app: this.resourcePrefix, workspace: workspaceId },
+      },
+      rules: [
+        {
+          apiGroups: [''],
+          resources: [
+            'pods',
+            'pods/log',
+            'configmaps',
+            'services',
+            'secrets',
+            'persistentvolumeclaims',
+          ],
+          verbs: ['*'],
+        },
+        {
+          apiGroups: ['apps'],
+          resources: ['deployments'],
+          verbs: ['*'],
+        },
+        {
+          apiGroups: ['metrics.k8s.io'],
+          resources: ['pods'],
+          verbs: ['get', 'list'],
+        },
+      ],
+    });
   }
 
-  createRoleBinding(): Promise<{
+  // TODO: finish this method
+  createRoleBinding(
+    workspaceId: string,
+  ): Promise<{
     response: http.IncomingMessage;
     body: k8s.V1RoleBinding;
   }> {
-    return this.k8sRbacAuthorizationV1Api.createNamespacedRoleBinding('', {
-      roleRef: { apiGroup: '', kind: '', name: '' },
-    });
+    const resourceName: string = this.generateResourceName(workspaceId);
+    return this.k8sRbacAuthorizationV1Api.createNamespacedRoleBinding(
+      resourceName,
+      {
+        apiVersion: 'rbac.authorization.k8s.io/v1',
+        kind: 'RoleBinding',
+        metadata: {
+          name: resourceName,
+          // TODO: see if this should be a separate method
+          labels: { app: this.resourcePrefix, workspace: workspaceId },
+        },
+        roleRef: {
+          apiGroup: 'rbac.authorization.k8s.io',
+          kind: 'Role',
+          name: resourceName,
+        },
+        subjects: [
+          {
+            kind: 'ServiceAccount',
+            name: this.kubernetesConfig.serviceAccount,
+            namespace: this.kubernetesConfig.namespace,
+          },
+        ],
+      },
+    );
   }
 
   /**
@@ -601,8 +663,8 @@ export class KubernetesService {
     try {
       await this.createNamespace(workspaceId);
       await this.createNetworkPolicy();
-      await this.createRole();
-      await this.createRoleBinding();
+      await this.createRole(workspaceId);
+      await this.createRoleBinding(workspaceId);
     } catch (err) {
       // TODO: handle errors
     }
