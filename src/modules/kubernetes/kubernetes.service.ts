@@ -118,7 +118,7 @@ export class KubernetesService {
       spec: {
         // Select all the pods in the namespace
         podSelector: {},
-        policyTypes: ['Ingress', 'Egress'],
+        policyTypes: ['Ingress'],
         ingress: [
           {
             // Allow ingress from the agoracloud-server container only
@@ -133,19 +133,6 @@ export class KubernetesService {
                   matchLabels: {
                     app: `${this.resourcePrefix}-server`,
                   },
-                },
-              },
-            ],
-          },
-        ],
-        egress: [
-          {
-            // Allow egress to the internet only
-            to: [
-              {
-                ipBlock: {
-                  cidr: '0.0.0.0/0',
-                  except: ['10.0.0.0/8', '192.168.0.0/16', '172.16.0.0/12'],
                 },
               },
             ],
