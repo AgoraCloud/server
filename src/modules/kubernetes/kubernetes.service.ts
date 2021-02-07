@@ -132,7 +132,6 @@ export class KubernetesService {
           resources: [
             'pods',
             'pods/log',
-            'configmaps',
             'services',
             'secrets',
             'persistentvolumeclaims',
