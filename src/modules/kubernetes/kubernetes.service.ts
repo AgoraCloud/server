@@ -953,6 +953,33 @@ export class KubernetesService {
   }
 
   /**
+   * Cron job that runs every hour and deletes a workspaces Kubernetes
+   * namespace that was not deleted when the workspace was deleted
+   */
+  @Cron(CronExpression.EVERY_HOUR)
+  private async deleteRemainingKubernetesNamespacesJob(): Promise<void> {
+    const {
+      body: { items: namespaces },
+    } = await this.k8sCoreV1Api.listNamespace(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      'workspace',
+    );
+    const workspaceNamespaces: WorkspaceNamespace[] = await this.getAllNamespaces();
+    for (const namespace of namespaces) {
+      const namespaceName: string = namespace.metadata?.name;
+      if (
+        workspaceNamespaces.findIndex((w) => w.namespace === namespaceName) ===
+        -1
+      ) {
+        await this.deleteNamespace(namespaceName);
+      }
+    }
+  }
+
+  /**
    * Cron job that runs every hour and deletes any Kubernetes
    * resource that was not deleted when a deployment was
    * deleted
