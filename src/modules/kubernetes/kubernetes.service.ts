@@ -40,7 +40,6 @@ export class KubernetesService {
   private readonly k8sRbacAuthorizationV1Api: k8s.RbacAuthorizationV1Api;
   private readonly kubernetesConfig: KubernetesConfig;
   private readonly resourcePrefix: string = 'agoracloud';
-  // TODO: remove after debugging is done
   private readonly logger = new Logger(KubernetesService.name);
 
   constructor(
@@ -97,14 +96,57 @@ export class KubernetesService {
     return this.k8sCoreV1Api.deleteNamespace(name);
   }
 
-  // TODO: finish this method
+  /**
+   * Create a Kubernetes network policy
+   * @param namespace the Kubernetes namespace
+   * @param workspaceId the workspace id
+   */
   createNetworkPolicy(
     namespace: string,
+    workspaceId: string,
   ): Promise<{
     response: http.IncomingMessage;
     body: k8s.V1NetworkPolicy;
   }> {
-    return this.k8sNetworkingV1Api.createNamespacedNetworkPolicy(namespace, {});
+    return this.k8sNetworkingV1Api.createNamespacedNetworkPolicy(namespace, {
+      apiVersion: 'networking.k8s.io/v1',
+      kind: 'NetworkPolicy',
+      metadata: {
+        name: this.generateResourceName(workspaceId),
+        labels: this.generateWorkspaceLabels(workspaceId),
+      },
+      spec: {
+        // Select all the pods in the namespace
+        podSelector: {},
+        ingress: [
+          {
+            // Allow ingress from the agoracloud-server container only
+            from: [
+              {
+                podSelector: {
+                  matchLabels: {
+                    app: `${this.resourcePrefix}-server`,
+                  },
+                },
+              },
+            ],
+          },
+        ],
+        egress: [
+          {
+            // Allow egress to the internet only
+            to: [
+              {
+                ipBlock: {
+                  cidr: '0.0.0.0/0',
+                  except: ['10.0.0.0/8', '192.168.0.0/16', '172.16.0.0/12'],
+                },
+              },
+            ],
+          },
+        ],
+      },
+    });
   }
 
   /**
@@ -709,8 +751,7 @@ export class KubernetesService {
     const namespace: string = this.generateResourceName(workspaceId);
     try {
       await this.createNamespace(namespace, workspaceId);
-      // TODO: enable this when the method is implemented
-      // await this.createNetworkPolicy(namespace);
+      await this.createNetworkPolicy(namespace, workspaceId);
       await this.createRole(namespace, workspaceId);
       await this.createRoleBinding(namespace, workspaceId);
       await this.startNamespacedPodInformer(namespace);
