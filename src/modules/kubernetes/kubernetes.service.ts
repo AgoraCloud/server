@@ -118,11 +118,17 @@ export class KubernetesService {
       spec: {
         // Select all the pods in the namespace
         podSelector: {},
+        policyTypes: ['Ingress', 'Egress'],
         ingress: [
           {
             // Allow ingress from the agoracloud-server container only
             from: [
               {
+                namespaceSelector: {
+                  matchLabels: {
+                    app: this.resourcePrefix,
+                  },
+                },
                 podSelector: {
                   matchLabels: {
                     app: `${this.resourcePrefix}-server`,
