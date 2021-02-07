@@ -91,24 +91,22 @@ export class DeploymentsService {
 
   /**
    * Find a deployment
-   * @param userId the users id
    * @param deploymentId the deployment id
+   * @param userId the users id
    * @param workspaceId the workspace id
    */
   async findOne(
-    userId: string,
     deploymentId: string,
+    userId?: string,
     workspaceId?: string,
   ): Promise<DeploymentDocument> {
     let deploymentQuery: Query<
       DeploymentDocument,
       DeploymentDocument
-    > = this.deploymentModel
-      .findOne()
-      .where('_id')
-      .equals(deploymentId)
-      .where('user')
-      .equals(userId);
+    > = this.deploymentModel.findOne().where('_id').equals(deploymentId);
+    if (userId) {
+      deploymentQuery = deploymentQuery.where('user').equals(userId);
+    }
     if (workspaceId) {
       deploymentQuery = deploymentQuery.where('workspace').equals(workspaceId);
     }
@@ -131,8 +129,8 @@ export class DeploymentsService {
     updateDeploymentDto: UpdateDeploymentDto,
   ): Promise<DeploymentDocument> {
     const deployment: DeploymentDocument = await this.findOne(
-      userId,
       deploymentId,
+      userId,
       workspaceId,
     );
     if (deployment.status !== DeploymentStatus.Running) {
