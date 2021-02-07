@@ -62,11 +62,27 @@ export class KubernetesService {
   }
 
   /**
+   * Get all Kubernetes namespaces
+   */
+  private getAllNamespaces(): Promise<{
+    response: http.IncomingMessage;
+    body: k8s.V1NamespaceList;
+  }> {
+    return this.k8sCoreV1Api.listNamespace(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      'workspace',
+    );
+  }
+
+  /**
    * Create a Kubernetes namespace
    * @param name the name of the namespace
    * @param workspaceId the workspace id
    */
-  createNamespace(
+  private createNamespace(
     name: string,
     workspaceId: string,
   ): Promise<{
@@ -87,7 +103,7 @@ export class KubernetesService {
    * Delete a Kubernetes namespace
    * @param name The name of the namespace
    */
-  deleteNamespace(
+  private deleteNamespace(
     name: string,
   ): Promise<{
     response: http.IncomingMessage;
@@ -101,7 +117,7 @@ export class KubernetesService {
    * @param namespace the Kubernetes namespace
    * @param workspaceId the workspace id
    */
-  createNetworkPolicy(
+  private createNetworkPolicy(
     namespace: string,
     workspaceId: string,
   ): Promise<{
@@ -147,7 +163,7 @@ export class KubernetesService {
    * @param namespace the Kubernetes namespace
    * @param workspaceId the workspace id
    */
-  createRole(
+  private createRole(
     namespace: string,
     workspaceId: string,
   ): Promise<{
@@ -192,7 +208,7 @@ export class KubernetesService {
    * @param namespace the Kubernetes namespace
    * @param workspaceId the workspace id
    */
-  createRoleBinding(
+  private createRoleBinding(
     namespace: string,
     workspaceId: string,
   ): Promise<{
@@ -895,7 +911,7 @@ export class KubernetesService {
    * Set up and start the Kubernetes pod informer for all namespaces
    */
   private async startPodInformer(): Promise<void> {
-    const workspaceNamespaces: WorkspaceNamespace[] = await this.getAllNamespaces();
+    const workspaceNamespaces: WorkspaceNamespace[] = await this.getAllWorkspaceNamespaces();
     for (const workspaceNamespace of workspaceNamespaces) {
       await this.startNamespacedPodInformer(workspaceNamespace.namespace);
     }
@@ -960,14 +976,8 @@ export class KubernetesService {
   private async deleteRemainingKubernetesNamespacesJob(): Promise<void> {
     const {
       body: { items: namespaces },
-    } = await this.k8sCoreV1Api.listNamespace(
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      'workspace',
-    );
-    const workspaceNamespaces: WorkspaceNamespace[] = await this.getAllNamespaces();
+    } = await this.getAllNamespaces();
+    const workspaceNamespaces: WorkspaceNamespace[] = await this.getAllWorkspaceNamespaces();
     for (const namespace of namespaces) {
       const namespaceName: string = namespace.metadata?.name;
       if (
@@ -986,7 +996,7 @@ export class KubernetesService {
    */
   @Cron(CronExpression.EVERY_HOUR)
   private async deleteRemainingKubernetesResourcesJob(): Promise<void> {
-    const workspaceNamespaces: WorkspaceNamespace[] = await this.getAllNamespaces();
+    const workspaceNamespaces: WorkspaceNamespace[] = await this.getAllWorkspaceNamespaces();
     for (const workspaceNamespace of workspaceNamespaces) {
       const namespace: string = workspaceNamespace.namespace;
       const storedDeployments: DeploymentDocument[] = await this.deploymentsService.findAll(
@@ -1041,7 +1051,7 @@ export class KubernetesService {
    */
   @Cron(CronExpression.EVERY_MINUTE)
   private async updateDeploymentStatusesJob(): Promise<void> {
-    const workspaceNamespaces: WorkspaceNamespace[] = await this.getAllNamespaces();
+    const workspaceNamespaces: WorkspaceNamespace[] = await this.getAllWorkspaceNamespaces();
     for (const workspaceNamespace of workspaceNamespaces) {
       const {
         body: { items: pods },
@@ -1102,7 +1112,7 @@ export class KubernetesService {
   /**
    * Get all workspace namespaces
    */
-  private async getAllNamespaces(): Promise<WorkspaceNamespace[]> {
+  private async getAllWorkspaceNamespaces(): Promise<WorkspaceNamespace[]> {
     const workspaces: WorkspaceDocument[] = await this.workspacesService.findAll();
     return workspaces.map(
       (w) => new WorkspaceNamespace(w._id, this.generateResourceName(w._id)),
