@@ -746,7 +746,9 @@ export class KubernetesService {
    * @param payload the workspace.created event payload
    */
   @OnEvent(Event.WorkspaceCreated)
-  private async handleWorkspaceCreatedEvent(payload: WorkspaceCreatedEvent) {
+  private async handleWorkspaceCreatedEvent(
+    payload: WorkspaceCreatedEvent,
+  ): Promise<void> {
     const workspaceId: string = payload.workspace._id;
     const namespace: string = this.generateResourceName(workspaceId);
     try {
@@ -769,7 +771,9 @@ export class KubernetesService {
    * @param payload the workspace.deleted event payload
    */
   @OnEvent(Event.WorkspaceDeleted)
-  private async handleWorkspaceDeletedEvent(payload: WorkspaceDeletedEvent) {
+  private async handleWorkspaceDeletedEvent(
+    payload: WorkspaceDeletedEvent,
+  ): Promise<void> {
     try {
       const namespace: string = this.generateResourceName(payload.id);
       await this.deleteNamespace(namespace);
@@ -908,7 +912,7 @@ export class KubernetesService {
    * Set up and start the Kubernetes pod informer for a specific namespace
    * @param namespace the Kubernetes namespace
    */
-  private async startNamespacedPodInformer(namespace: string) {
+  private async startNamespacedPodInformer(namespace: string): Promise<void> {
     const listFn = (): Promise<{
       response: http.IncomingMessage;
       body: k8s.V1PodList;
