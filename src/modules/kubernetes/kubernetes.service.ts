@@ -953,8 +953,8 @@ export class KubernetesService {
   }
 
   /**
-   * Cron job that runs every hour and deletes a workspaces Kubernetes
-   * namespace that was not deleted when the workspace was deleted
+   * Cron job that runs every hour and deletes any Kubernetes
+   * namespace that was not deleted when a workspace was deleted
    */
   @Cron(CronExpression.EVERY_HOUR)
   private async deleteRemainingKubernetesNamespacesJob(): Promise<void> {
