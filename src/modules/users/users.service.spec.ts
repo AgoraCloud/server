@@ -73,7 +73,6 @@ describe('UsersService', () => {
       expect(createdUser.email).toBe(createUserDto.email);
       expect(createdUser.isEnabled).toBe(true);
       expect(createdUser.isVerified).toBe(false);
-      expect(createdUser.isAdmin).toBe(false);
       expect(eventEmitterSpy).toHaveBeenCalledTimes(1);
       user = createdUser;
     });

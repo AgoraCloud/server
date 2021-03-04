@@ -21,6 +21,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as bcrypt from 'bcryptjs';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { Role } from '../authorization/schemas/permission.schema';
 
 @Injectable()
 export class UsersService implements OnModuleInit {
@@ -51,13 +52,16 @@ export class UsersService implements OnModuleInit {
       await this.findByEmail(adminConfig.email);
     } catch (err) {
       // Admin user has not been created yet, create it
-      await this.userModel.create({
+      const createdUser: UserDocument = await this.userModel.create({
         email: adminConfig.email,
         fullName: 'Admin',
         password: await bcrypt.hash(adminConfig.password, 10),
-        isAdmin: true,
         isVerified: true,
       });
+      this.eventEmitter.emit(
+        Event.UserCreated,
+        new UserCreatedEvent(createdUser, undefined, Role.SuperAdmin),
+      );
     }
   }
 

@@ -1,5 +1,5 @@
 import { User, UserDocument } from './../../users/schemas/user.schema';
-import { SchemaFactory, Prop } from '@nestjs/mongoose';
+import { SchemaFactory, Prop, Schema } from '@nestjs/mongoose';
 import * as mongoose from 'mongoose';
 
 export enum Role {
@@ -59,13 +59,42 @@ const WorkspaceActions: string[] = [
   Action.DeleteWorkspace,
 ];
 
-const InWorkspaceActions: string[] = Object.keys(Action)
-  .map((v) => Action[v])
-  .filter((v) => !WorkspaceActions.includes(v));
+const InWorkspaceActions: string[] = [
+  Action.CreateDeployment,
+  Action.ReadDeployment,
+  Action.ProxyDeployment,
+  Action.UpdateDeployment,
+  Action.DeleteDeployment,
+  Action.CreateWiki,
+  Action.ReadWiki,
+  Action.UpdateWiki,
+  Action.DeleteWiki,
+  Action.CreateWikiSection,
+  Action.ReadWikiSection,
+  Action.UpdateWikiSection,
+  Action.DeleteWikiSection,
+  Action.CreateWikiPage,
+  Action.ReadWikiPage,
+  Action.UpdateWikiPage,
+  Action.DeleteWikiPage,
+  Action.CreateProject,
+  Action.ReadProject,
+  Action.UpdateProject,
+  Action.DeleteProject,
+  Action.CreateProjectLane,
+  Action.ReadProjectLane,
+  Action.UpdateProjectLane,
+  Action.DeleteProjectLane,
+  Action.CreateProjectTask,
+  Action.ReadProjectTask,
+  Action.UpdateProjectTask,
+  Action.DeleteProjectTask,
+];
 
 export class WorkspaceRolesAndPermissions {
   @Prop({
     required: true,
+    type: [String],
     enum: [Role.User, Role.WorkspaceAdmin],
     default: [Role.User],
   })
@@ -73,6 +102,7 @@ export class WorkspaceRolesAndPermissions {
 
   @Prop({
     required: true,
+    type: [String],
     enum: InWorkspaceActions,
     default: InWorkspaceActions,
   })
@@ -85,6 +115,7 @@ export class WorkspaceRolesAndPermissions {
 
 export type PermissionDocument = Permission & mongoose.Document;
 
+@Schema({ collection: 'permissions' })
 export class Permission {
   @Prop({
     required: true,
@@ -97,6 +128,7 @@ export class Permission {
 
   @Prop({
     required: true,
+    type: [String],
     enum: [Role.User, Role.SuperAdmin],
     default: [Role.User],
   })
@@ -104,6 +136,7 @@ export class Permission {
 
   @Prop({
     required: true,
+    type: [String],
     enum: WorkspaceActions,
     default: WorkspaceActions,
   })
@@ -111,7 +144,7 @@ export class Permission {
 
   @Prop({
     required: true,
-    type: { type: Map, of: WorkspaceRolesAndPermissions },
+    type: Map,
     default: new Map<string, WorkspaceRolesAndPermissions>(),
   })
   workspaces: Map<string, WorkspaceRolesAndPermissions>;

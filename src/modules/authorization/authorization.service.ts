@@ -24,8 +24,15 @@ export class AuthorizationService {
     private readonly permissionModel: Model<PermissionDocument>,
   ) {}
 
-  private async create(userId: string): Promise<PermissionDocument> {
-    return;
+  /**
+   * Create a users permissions
+   * @param permission the users permissions to create
+   */
+  private async create(permission: Permission): Promise<PermissionDocument> {
+    const createdPermission: PermissionDocument = await this.permissionModel.create(
+      permission,
+    );
+    return createdPermission;
   }
 
   async findOne(userId: string): Promise<PermissionDocument> {
@@ -62,11 +69,24 @@ export class AuthorizationService {
     await this.permissionModel.deleteOne().where('user').equals(userId).exec();
   }
 
-  // TODO: create permissions for user
+  /**
+   * Handles the user.created event
+   * @param payload the user.created event payload
+   */
   @OnEvent(Event.UserCreated)
   private async handleUserCreatedEvent(
     payload: UserCreatedEvent,
-  ): Promise<void> {}
+  ): Promise<void> {
+    const userRole: Role = payload.role;
+    const permission: Permission = new Permission({
+      user: payload.user,
+      roles: [userRole],
+    });
+    if (userRole === Role.SuperAdmin) {
+      permission.permissions = [];
+    }
+    await this.create(permission);
+  }
 
   /**
    * Handles the user.deleted event
@@ -95,6 +115,7 @@ export class AuthorizationService {
       workspace._id,
       new WorkspaceRolesAndPermissions({
         roles: [Role.WorkspaceAdmin],
+        permissions: [],
       }),
     );
     await this.update(permission);
