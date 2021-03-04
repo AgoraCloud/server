@@ -4,7 +4,8 @@ import * as mongoose from 'mongoose';
 
 export enum Role {
   User = 'user',
-  Admin = 'admin',
+  SuperAdmin = 'super_admin',
+  WorkspaceAdmin = 'workspace_admin',
 }
 
 export enum Action {
@@ -62,8 +63,12 @@ const InWorkspaceActions: string[] = Object.keys(Action)
   .map((v) => Action[v])
   .filter((v) => !WorkspaceActions.includes(v));
 
-export class WorkspaceRolesAndActions {
-  @Prop({ required: true, enum: [Role.User, Role.Admin], default: [Role.User] })
+export class WorkspaceRolesAndPermissions {
+  @Prop({
+    required: true,
+    enum: [Role.User, Role.WorkspaceAdmin],
+    default: [Role.User],
+  })
   roles: Role[];
 
   @Prop({
@@ -71,9 +76,9 @@ export class WorkspaceRolesAndActions {
     enum: InWorkspaceActions,
     default: InWorkspaceActions,
   })
-  actions: Action[];
+  permissions: Action[];
 
-  constructor(partial: Partial<WorkspaceRolesAndActions>) {
+  constructor(partial: Partial<WorkspaceRolesAndPermissions>) {
     Object.assign(this, partial);
   }
 }
@@ -90,7 +95,11 @@ export class Permission {
   })
   user: UserDocument;
 
-  @Prop({ required: true, enum: [Role.User, Role.Admin], default: [Role.User] })
+  @Prop({
+    required: true,
+    enum: [Role.User, Role.SuperAdmin],
+    default: [Role.User],
+  })
   roles: Role[];
 
   @Prop({
@@ -98,14 +107,14 @@ export class Permission {
     enum: WorkspaceActions,
     default: WorkspaceActions,
   })
-  actions: Action[];
+  permissions: Action[];
 
   @Prop({
     required: true,
-    type: { type: Map, of: WorkspaceRolesAndActions },
-    default: new Map<string, WorkspaceRolesAndActions>(),
+    type: { type: Map, of: WorkspaceRolesAndPermissions },
+    default: new Map<string, WorkspaceRolesAndPermissions>(),
   })
-  workspaces: Map<string, WorkspaceRolesAndActions>;
+  workspaces: Map<string, WorkspaceRolesAndPermissions>;
 
   constructor(partial: Partial<Permission>) {
     Object.assign(this, partial);
