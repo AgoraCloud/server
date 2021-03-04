@@ -1,3 +1,6 @@
+import { Permissions } from '../../../decorators/permissions.decorator';
+import { Action } from './../../authorization/schemas/permission.schema';
+import { Auth } from 'src/decorators/auth.decorator';
 import { ExceptionDto } from './../../../utils/base.dto';
 import {
   ApiTags,
@@ -17,7 +20,6 @@ import { UserDocument } from './../../users/schemas/user.schema';
 import { TransformInterceptor } from './../../../interceptors/transform.interceptor';
 import { ProjectInterceptor } from './../../../interceptors/project.interceptor';
 import { WorkspaceInterceptor } from './../../../interceptors/workspace.interceptor';
-import { JwtAuthenticationGuard } from './../../authentication/guards/jwt-authentication.guard';
 import {
   Controller,
   Get,
@@ -26,7 +28,6 @@ import {
   Put,
   Param,
   Delete,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ProjectLanesService } from './lanes.service';
@@ -40,7 +41,7 @@ import { ProjectLaneDocument } from './schemas/lane.schema';
 
 @ApiCookieAuth()
 @ApiTags('Project Lanes')
-@UseGuards(JwtAuthenticationGuard)
+@Auth(Action.ReadWorkspace, Action.ReadProject)
 @Controller('api/workspaces/:workspaceId/projects/:projectId/lanes')
 @UseInterceptors(
   WorkspaceInterceptor,
@@ -58,6 +59,7 @@ export class ProjectLanesController {
    * @param createProjectLaneDto the project lane to create
    */
   @Post()
+  @Permissions(Action.CreateProjectLane)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiParam({ name: 'projectId', description: 'The project id' })
   @ApiOperation({ summary: 'Create a project lane' })
@@ -96,6 +98,7 @@ export class ProjectLanesController {
    * @param projectId the project id
    */
   @Get()
+  @Permissions(Action.ReadProjectLane)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiParam({ name: 'projectId', description: 'The project id' })
   @ApiOperation({ summary: 'Get all project lanes' })
@@ -128,6 +131,7 @@ export class ProjectLanesController {
    * @param projectLaneId the project lane id
    */
   @Get(':id')
+  @Permissions(Action.ReadProjectLane)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiParam({ name: 'projectId', description: 'The project id' })
   @ApiParam({ name: 'id', description: 'The project lane id' })
@@ -170,6 +174,7 @@ export class ProjectLanesController {
    * @param updateProjectLaneDto the updated project lane
    */
   @Put(':id')
+  @Permissions(Action.UpdateProjectLane)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiParam({ name: 'projectId', description: 'The project id' })
   @ApiParam({ name: 'id', description: 'The project lane id' })
@@ -213,6 +218,7 @@ export class ProjectLanesController {
    * @param projectLaneId the project lane id
    */
   @Delete(':id')
+  @Permissions(Action.DeleteProjectLane)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiParam({ name: 'projectId', description: 'The project id' })
   @ApiParam({ name: 'id', description: 'The project lane id' })

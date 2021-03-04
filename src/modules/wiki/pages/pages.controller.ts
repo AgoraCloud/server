@@ -1,3 +1,6 @@
+import { Permissions } from './../../../decorators/permissions.decorator';
+import { Action } from './../../authorization/schemas/permission.schema';
+import { Auth } from 'src/decorators/auth.decorator';
 import { ExceptionDto } from './../../../utils/base.dto';
 import {
   ApiTags,
@@ -26,13 +29,11 @@ import {
   Put,
   Param,
   Delete,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { WikiPagesService } from './pages.service';
 import { CreateWikiPageDto } from './dto/create-page.dto';
 import { UpdateWikiPageDto } from './dto/update-page.dto';
-import { JwtAuthenticationGuard } from '../../authentication/guards/jwt-authentication.guard';
 import { User } from '../../../decorators/user.decorator';
 import { Workspace } from '../../../decorators/workspace.decorator';
 import { WikiSection } from '../../../decorators/wiki-section.decorator';
@@ -40,7 +41,7 @@ import { WikiPageDocument } from './schemas/page.schema';
 
 @ApiCookieAuth()
 @ApiTags('Wiki Pages')
-@UseGuards(JwtAuthenticationGuard)
+@Auth(Action.ReadWorkspace, Action.ReadWikiSection)
 @Controller('api/workspaces/:workspaceId/sections/:sectionId/pages')
 @UseInterceptors(
   WorkspaceInterceptor,
@@ -58,6 +59,7 @@ export class WikiPagesController {
    * @param createWikiPageDto the wiki page to create
    */
   @Post()
+  @Permissions(Action.CreateWikiPage)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiParam({ name: 'sectionId', description: 'The wiki section id' })
   @ApiOperation({ summary: 'Create a wiki page' })
@@ -97,6 +99,7 @@ export class WikiPagesController {
    * @param wikiSectionId the wiki section id
    */
   @Get()
+  @Permissions(Action.ReadWikiPage)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiParam({ name: 'sectionId', description: 'The wiki section id' })
   @ApiOperation({ summary: 'Get all wiki pages' })
@@ -130,6 +133,7 @@ export class WikiPagesController {
    * @param wikiPageId the wiki page id
    */
   @Get(':id')
+  @Permissions(Action.ReadWikiPage)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiParam({ name: 'sectionId', description: 'The wiki section id' })
   @ApiParam({ name: 'id', description: 'The wiki page id' })
@@ -172,6 +176,7 @@ export class WikiPagesController {
    * @param updateWikiPageDto the updated wiki page
    */
   @Put(':id')
+  @Permissions(Action.UpdateWikiPage)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiParam({ name: 'sectionId', description: 'The wiki section id' })
   @ApiParam({ name: 'id', description: 'The wiki page id' })
@@ -215,6 +220,7 @@ export class WikiPagesController {
    * @param wikiPageId the wiki page id
    */
   @Delete(':id')
+  @Permissions(Action.DeleteWikiPage)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiParam({ name: 'sectionId', description: 'The wiki section id' })
   @ApiParam({ name: 'id', description: 'The wiki page id' })
