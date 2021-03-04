@@ -7,73 +7,73 @@ export enum Role {
   Admin = 'admin',
 }
 
-export enum PermissionType {
-  // Workspace Permissions
+export enum Action {
+  // Workspace Actions
   CreateWorkspace = 'workspaces:create',
   ReadWorkspace = 'workspaces:read',
   UpdateWorkspace = 'workspaces:update',
   DeleteWorkspace = 'workspaces:delete',
-  // Deployment Permissions
+  // Deployment Actions
   CreateDeployment = 'deployments:create',
   ReadDeployment = 'deployments:read',
   ProxyDeployment = 'deployments:proxy',
   UpdateDeployment = 'deployments:update',
   DeleteDeployment = 'deployments:delete',
-  // Wiki Permissions
+  // Wiki Actions
   CreateWiki = 'wiki:create',
   ReadWiki = 'wiki:read',
   UpdateWiki = 'wiki:update',
   DeleteWiki = 'wiki:delete',
-  // Wiki Section Permissions
+  // Wiki Section Actions
   CreateWikiSection = 'wiki_sections:create',
   ReadWikiSection = 'wiki_sections:read',
   UpdateWikiSection = 'wiki_sections:update',
   DeleteWikiSection = 'wiki_sections:delete',
-  // Wiki Page Permissions
+  // Wiki Page Actions
   CreateWikiPage = 'wiki_pages:create',
   ReadWikiPage = 'wiki_pages:read',
   UpdateWikiPage = 'wiki_pages:update',
   DeleteWikiPage = 'wiki_pages:delete',
-  // Project Permissions
+  // Project Actions
   CreateProject = 'projects:create',
   ReadProject = 'projects:read',
   UpdateProject = 'projects:update',
   DeleteProject = 'projects:delete',
-  // Project Lane Permissions
+  // Project Lane Actions
   CreateProjectLane = 'project_lanes:create',
   ReadProjectLane = 'project_lanes:read',
   UpdateProjectLane = 'project_lanes:update',
   DeleteProjectLane = 'project_lanes:delete',
-  // Project Task Permissions
+  // Project Task Actions
   CreateProjectTask = 'project_tasks:create',
   ReadProjectTask = 'project_tasks:read',
   UpdateProjectTask = 'project_tasks:update',
   DeleteProjectTask = 'project_tasks:delete',
 }
 
-const WorkspacePermissions: string[] = [
-  PermissionType.CreateWorkspace,
-  PermissionType.ReadWorkspace,
-  PermissionType.UpdateWorkspace,
-  PermissionType.DeleteWorkspace,
+const WorkspaceActions: string[] = [
+  Action.CreateWorkspace,
+  Action.ReadWorkspace,
+  Action.UpdateWorkspace,
+  Action.DeleteWorkspace,
 ];
 
-const InWorkspacePermissions: string[] = Object.keys(PermissionType)
-  .map((v) => PermissionType[v])
-  .filter((v) => !WorkspacePermissions.includes(v));
+const InWorkspaceActions: string[] = Object.keys(Action)
+  .map((v) => Action[v])
+  .filter((v) => !WorkspaceActions.includes(v));
 
-export class WorkspaceRolesAndPermissions {
+export class WorkspaceRolesAndActions {
   @Prop({ required: true, enum: [Role.User, Role.Admin], default: [Role.User] })
   roles: Role[];
 
   @Prop({
     required: true,
-    enum: InWorkspacePermissions,
-    default: InWorkspacePermissions,
+    enum: InWorkspaceActions,
+    default: InWorkspaceActions,
   })
-  permissions: PermissionType[];
+  actions: Action[];
 
-  constructor(partial: Partial<WorkspaceRolesAndPermissions>) {
+  constructor(partial: Partial<WorkspaceRolesAndActions>) {
     Object.assign(this, partial);
   }
 }
@@ -95,17 +95,17 @@ export class Permission {
 
   @Prop({
     required: true,
-    enum: WorkspacePermissions,
-    default: WorkspacePermissions,
+    enum: WorkspaceActions,
+    default: WorkspaceActions,
   })
-  permissions: PermissionType[];
+  actions: Action[];
 
   @Prop({
     required: true,
-    type: { type: Map, of: WorkspaceRolesAndPermissions },
-    default: new Map<string, WorkspaceRolesAndPermissions>(),
+    type: { type: Map, of: WorkspaceRolesAndActions },
+    default: new Map<string, WorkspaceRolesAndActions>(),
   })
-  workspaces: Map<string, WorkspaceRolesAndPermissions>;
+  workspaces: Map<string, WorkspaceRolesAndActions>;
 
   constructor(partial: Partial<Permission>) {
     Object.assign(this, partial);
