@@ -99,9 +99,12 @@ export class Permission {
   })
   permissions: PermissionType[];
 
-  // TODO: fix this
-  @Prop({ required: true, type: Map, default: {} })
-  workspaces: Record<string, WorkspaceRolesAndPermissions>;
+  @Prop({
+    required: true,
+    type: { type: Map, of: WorkspaceRolesAndPermissions },
+    default: new Map<string, WorkspaceRolesAndPermissions>(),
+  })
+  workspaces: Map<string, WorkspaceRolesAndPermissions>;
 
   constructor(partial: Partial<Permission>) {
     Object.assign(this, partial);
