@@ -1,10 +1,10 @@
 import { MongooseModule } from '@nestjs/mongoose';
-import { Module } from '@nestjs/common';
+import { Module, Global } from '@nestjs/common';
 import { AuthorizationService } from './authorization.service';
 import { AuthorizationController } from './authorization.controller';
 import { Permission, PermissionSchema } from './schemas/permission.schema';
-import { AbilityFactory } from './ability-factory.service';
 
+@Global()
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -12,6 +12,7 @@ import { AbilityFactory } from './ability-factory.service';
     ]),
   ],
   controllers: [AuthorizationController],
-  providers: [AuthorizationService, AbilityFactory],
+  providers: [AuthorizationService],
+  exports: [AuthorizationService],
 })
 export class AuthorizationModule {}

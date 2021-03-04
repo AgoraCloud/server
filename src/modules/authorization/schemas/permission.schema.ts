@@ -52,14 +52,14 @@ export enum Action {
   DeleteProjectTask = 'project_tasks:delete',
 }
 
-const WorkspaceActions: string[] = [
+export const WorkspaceActions: Action[] = [
   Action.CreateWorkspace,
   Action.ReadWorkspace,
   Action.UpdateWorkspace,
   Action.DeleteWorkspace,
 ];
 
-const InWorkspaceActions: string[] = [
+export const InWorkspaceActions: Action[] = [
   Action.CreateDeployment,
   Action.ReadDeployment,
   Action.ProxyDeployment,

@@ -8,6 +8,7 @@ import { UserCreatedEvent } from './../../events/user-created.event';
 import { InjectModel } from '@nestjs/mongoose';
 import { Injectable } from '@nestjs/common';
 import {
+  Action,
   Permission,
   PermissionDocument,
   Role,
@@ -35,6 +36,21 @@ export class AuthorizationService {
     return createdPermission;
   }
 
+  /**
+   * Find all permissions for users that are members in the given workspace
+   * @param workspaceId the workspace id
+   */
+  private async findAll(workspaceId: string): Promise<PermissionDocument[]> {
+    const retrievedPermissions: PermissionDocument[] = await this.permissionModel
+      .find()
+      .exec();
+    return retrievedPermissions.filter((p) => p.workspaces.has(workspaceId));
+  }
+
+  /**
+   * Find a users permissions
+   * @param userId the users id
+   */
   async findOne(userId: string): Promise<PermissionDocument> {
     const permission: PermissionDocument = await this.permissionModel
       .findOne()
@@ -62,7 +78,7 @@ export class AuthorizationService {
   }
 
   /**
-   * Delete a users permission
+   * Delete a users permissions
    * @param userId the users id
    */
   private async remove(userId: string): Promise<void> {
@@ -134,9 +150,70 @@ export class AuthorizationService {
     await this.update(permission);
   }
 
-  // TODO: delete the workspace from all users permissions
+  /**
+   * Handles the workspace.deleted event
+   * @param payload the workspace.deleted event payload
+   */
   @OnEvent(Event.WorkspaceDeleted)
   private async handleWorkspaceDeletedEvent(
     payload: WorkspaceDeletedEvent,
-  ): Promise<void> {}
+  ): Promise<void> {
+    const workspaceId: string = payload.id;
+    const permissions: PermissionDocument[] = await this.findAll(workspaceId);
+    for (const permission of permissions) {
+      permission.workspaces.delete(workspaceId);
+      await this.update(permission);
+    }
+  }
+
+  /**
+   * Checks whether a user has the given permissions
+   * @param user the user
+   * @param neededPermissions the needed permissions
+   * @param workspaceId the workspace id
+   */
+  async can(
+    user: UserDocument,
+    neededPermissions: Action[],
+    workspaceId?: string,
+  ): Promise<boolean> {
+    const permission: PermissionDocument = await this.findOne(user._id);
+    const grantedPermissions: Action[] = permission.permissions;
+
+    /**
+     * Checks whether the users granted permissions contain the needed permissions
+     * @param grantedPermissions the users granted permissions
+     * @param neededPermissions the users needed permissions
+     */
+    const hasPermissions = (
+      grantedPermissions: Action[],
+      neededPermissions: Action[],
+    ): boolean => {
+      let hasPermissions = true;
+      for (const action of neededPermissions) {
+        hasPermissions = hasPermissions && grantedPermissions.includes(action);
+        if (!hasPermissions) break;
+      }
+      return hasPermissions;
+    };
+
+    if (permission.roles.includes(Role.SuperAdmin)) {
+      return true;
+    } else if (!workspaceId) {
+      return hasPermissions(grantedPermissions, neededPermissions);
+    }
+
+    const workspaceRolesAndPermissions: WorkspaceRolesAndPermissions = permission.workspaces.get(
+      workspaceId,
+    );
+    if (!workspaceRolesAndPermissions) return false;
+    if (workspaceRolesAndPermissions.roles.includes(Role.WorkspaceAdmin)) {
+      return true;
+    } else {
+      return hasPermissions(
+        [...grantedPermissions, ...workspaceRolesAndPermissions.permissions],
+        neededPermissions,
+      );
+    }
+  }
 }
