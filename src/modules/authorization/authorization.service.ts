@@ -22,19 +22,30 @@ export class AuthorizationService {
     return;
   }
 
-  findOne(userId: string): Promise<PermissionDocument> {
-    return;
+  async findOne(userId: string): Promise<PermissionDocument> {
+    const permission: PermissionDocument = await this.permissionModel
+      .findOne()
+      .where('user')
+      .equals(userId)
+      .exec();
+    // TODO: is this needed?
+    // if (!permission) throw new PermissionNotFoundException();
+    return permission;
   }
 
-  update(
+  async update(
     userId: string,
     updateAuthorizationDto: UpdateAuthorizationDto,
   ): Promise<PermissionDocument> {
     return;
   }
 
-  remove(userId: string): Promise<void> {
-    return;
+  /**
+   * Delete a users permission
+   * @param userId the users id
+   */
+  private async remove(userId: string): Promise<void> {
+    await this.permissionModel.deleteOne().where('user').equals(userId).exec();
   }
 
   // TODO: create permissions for user
@@ -43,11 +54,16 @@ export class AuthorizationService {
     payload: UserCreatedEvent,
   ): Promise<void> {}
 
-  // TODO: delete permissions for user
+  /**
+   * Handles the user.deleted event
+   * @param payload the user.deleted event payload
+   */
   @OnEvent(Event.UserDeleted)
   private async handleUserDeletedEvent(
     payload: UserDeletedEvent,
-  ): Promise<void> {}
+  ): Promise<void> {
+    await this.remove(payload.id);
+  }
 
   // TODO: add the workspace to the users permissions
   @OnEvent(Event.WorkspaceCreated)

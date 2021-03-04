@@ -86,6 +86,7 @@ export class Permission {
     type: mongoose.Schema.Types.ObjectId,
     ref: User.name,
     index: true,
+    unique: true,
   })
   user: UserDocument;
 
