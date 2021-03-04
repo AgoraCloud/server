@@ -1,3 +1,5 @@
+import { Action } from './../authorization/schemas/permission.schema';
+import { Auth } from 'src/decorators/auth.decorator';
 import { KubernetesPodsService } from './kubernetes-pods.service';
 import { WorkspaceDocument } from './../workspaces/schemas/workspace.schema';
 import { ExceptionDto } from './../../utils/base.dto';
@@ -16,18 +18,12 @@ import { DeploymentInterceptor } from '../../interceptors/deployment.interceptor
 import { MetricsDto } from './dto/metrics.dto';
 import { KubernetesService } from './kubernetes.service';
 import { WorkspaceInterceptor } from '../../interceptors/workspace.interceptor';
-import { JwtAuthenticationGuard } from '../authentication/guards/jwt-authentication.guard';
-import {
-  Controller,
-  UseGuards,
-  UseInterceptors,
-  Get,
-  Param,
-} from '@nestjs/common';
+import { Controller, UseInterceptors, Get, Param } from '@nestjs/common';
 import { Workspace } from '../../decorators/workspace.decorator';
+import { Permissions } from 'src/decorators/permissions.decorator';
 
 @ApiCookieAuth()
-@UseGuards(JwtAuthenticationGuard)
+@Auth(Action.ReadWorkspace)
 @UseInterceptors(WorkspaceInterceptor)
 @Controller('api/workspaces/:workspaceId')
 export class KubernetesController {
@@ -42,6 +38,7 @@ export class KubernetesController {
    * @param deploymentId the deployment id
    */
   @Get('deployments/:deploymentId/logs')
+  @Permissions(Action.ReadDeployment)
   @UseInterceptors(DeploymentInterceptor)
   @ApiTags('Deployments')
   @ApiOperation({ summary: 'Get a deployments logs' })
@@ -77,6 +74,7 @@ export class KubernetesController {
    * @param deploymentId the deployment id
    */
   @Get('deployments/:deploymentId/metrics')
+  @Permissions(Action.ReadDeployment)
   @UseInterceptors(DeploymentInterceptor)
   @ApiTags('Deployments')
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })

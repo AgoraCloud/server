@@ -1,3 +1,6 @@
+import { Permissions } from './../../../decorators/permissions.decorator';
+import { Auth } from 'src/decorators/auth.decorator';
+import { Action } from './../../authorization/schemas/permission.schema';
 import { ExceptionDto } from './../../../utils/base.dto';
 import {
   ApiTags,
@@ -21,7 +24,6 @@ import { ProjectTaskDto } from './dto/task.dto';
 import { ProjectLaneInterceptor } from './../../../interceptors/project-lane.interceptor';
 import { ProjectInterceptor } from './../../../interceptors/project.interceptor';
 import { WorkspaceInterceptor } from './../../../interceptors/workspace.interceptor';
-import { JwtAuthenticationGuard } from './../../authentication/guards/jwt-authentication.guard';
 import {
   Controller,
   Get,
@@ -30,7 +32,6 @@ import {
   Put,
   Param,
   Delete,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ProjectTasksService } from './tasks.service';
@@ -43,7 +44,7 @@ import { ProjectLane } from '../../../decorators/project-lane.decorator';
 
 @ApiCookieAuth()
 @ApiTags('Project Tasks')
-@UseGuards(JwtAuthenticationGuard)
+@Auth(Action.ReadWorkspace, Action.ReadProject, Action.ReadProjectLane)
 @Controller(
   'api/workspaces/:workspaceId/projects/:projectId/lanes/:laneId/tasks',
 )
@@ -65,6 +66,7 @@ export class ProjectTasksController {
    * @param createProjectTaskDto the project task to create
    */
   @Post()
+  @Permissions(Action.CreateProjectTask)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiParam({ name: 'projectId', description: 'The project id' })
   @ApiParam({ name: 'laneId', description: 'The project lane id' })
@@ -108,6 +110,7 @@ export class ProjectTasksController {
    * @param projectLaneId the project lane id
    */
   @Get()
+  @Permissions(Action.ReadProjectTask)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiParam({ name: 'projectId', description: 'The project id' })
   @ApiParam({ name: 'laneId', description: 'The project lane id' })
@@ -150,6 +153,7 @@ export class ProjectTasksController {
    * @param projectTaskId the project task id
    */
   @Get(':id')
+  @Permissions(Action.ReadProjectTask)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiParam({ name: 'projectId', description: 'The project id' })
   @ApiParam({ name: 'laneId', description: 'The project lane id' })
@@ -196,6 +200,7 @@ export class ProjectTasksController {
    * @param updateProjectTaskDto the updated project task
    */
   @Put(':id')
+  @Permissions(Action.UpdateProjectTask)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiParam({ name: 'projectId', description: 'The project id' })
   @ApiParam({ name: 'laneId', description: 'The project lane id' })
@@ -243,6 +248,7 @@ export class ProjectTasksController {
    * @param projectTaskId the project task id
    */
   @Delete(':id')
+  @Permissions(Action.DeleteProjectTask)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiParam({ name: 'projectId', description: 'The project id' })
   @ApiParam({ name: 'laneId', description: 'The project lane id' })

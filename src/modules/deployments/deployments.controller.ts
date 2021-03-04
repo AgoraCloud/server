@@ -1,3 +1,4 @@
+import { Permissions } from './../../decorators/permissions.decorator';
 import { ExceptionDto } from './../../utils/base.dto';
 import {
   ApiTags,
@@ -13,7 +14,6 @@ import {
 import { DeploymentDto, DeploymentImageDto } from './dto/deployment.dto';
 import { TransformInterceptor } from './../../interceptors/transform.interceptor';
 import { FindOneParams } from './../../utils/find-one-params';
-import { JwtAuthenticationGuard } from '../authentication/guards/jwt-authentication.guard';
 import { WorkspaceInterceptor } from './../../interceptors/workspace.interceptor';
 import { UserDocument } from '../users/schemas/user.schema';
 import { WorkspaceDocument } from './../workspaces/schemas/workspace.schema';
@@ -26,7 +26,6 @@ import {
   Param,
   Delete,
   UseInterceptors,
-  UseGuards,
 } from '@nestjs/common';
 import { Workspace } from '../../decorators/workspace.decorator';
 import { DeploymentsService } from './deployments.service';
@@ -37,10 +36,12 @@ import {
   DeploymentDocument,
   DeploymentImage,
 } from './schemas/deployment.schema';
+import { Auth } from 'src/decorators/auth.decorator';
+import { Action } from '../authorization/schemas/permission.schema';
 
 @ApiCookieAuth()
 @ApiTags('Deployments')
-@UseGuards(JwtAuthenticationGuard)
+@Auth(Action.ReadWorkspace)
 @Controller('api/workspaces/:workspaceId/deployments')
 @UseInterceptors(WorkspaceInterceptor, new TransformInterceptor(DeploymentDto))
 export class DeploymentsController {
@@ -53,6 +54,7 @@ export class DeploymentsController {
    * @param createDeploymentDto the deployment to create
    */
   @Post()
+  @Permissions(Action.CreateDeployment)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiOperation({ summary: 'Create a new deployment' })
   @ApiCreatedResponse({
@@ -105,6 +107,7 @@ export class DeploymentsController {
    * @param workspaceId the workspace id
    */
   @Get()
+  @Permissions(Action.ReadDeployment)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiOperation({ summary: 'Get all deployments' })
   @ApiOkResponse({
@@ -134,6 +137,7 @@ export class DeploymentsController {
    * @param deploymentId the deployment id
    */
   @Get(':id')
+  @Permissions(Action.ReadDeployment)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiParam({ name: 'id', description: 'The deployment id' })
   @ApiOperation({ summary: 'Get a deployment' })
@@ -166,6 +170,7 @@ export class DeploymentsController {
    * @param updateDeploymentDto the updated deployment
    */
   @Put(':id')
+  @Permissions(Action.UpdateDeployment)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiParam({ name: 'id', description: 'The deployment id' })
   @ApiOperation({ summary: 'Update a deployment' })
@@ -204,6 +209,7 @@ export class DeploymentsController {
    * @param deploymentId the deployment id
    */
   @Delete(':id')
+  @Permissions(Action.DeleteDeployment)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiParam({ name: 'id', description: 'The deployment id' })
   @ApiOperation({ summary: 'Delete a deployment' })

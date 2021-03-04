@@ -1,3 +1,5 @@
+import { Action } from './../authorization/schemas/permission.schema';
+import { Auth } from 'src/decorators/auth.decorator';
 import { ExceptionDto } from './../../utils/base.dto';
 import {
   ApiTags,
@@ -16,7 +18,6 @@ import { UserDocument } from './../users/schemas/user.schema';
 import { ProjectDto } from './dto/project.dto';
 import { TransformInterceptor } from './../../interceptors/transform.interceptor';
 import { WorkspaceInterceptor } from './../../interceptors/workspace.interceptor';
-import { JwtAuthenticationGuard } from './../authentication/guards/jwt-authentication.guard';
 import {
   Controller,
   Get,
@@ -25,7 +26,6 @@ import {
   Put,
   Param,
   Delete,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
@@ -34,10 +34,11 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { User } from '../../decorators/user.decorator';
 import { Workspace } from '../../decorators/workspace.decorator';
 import { ProjectDocument } from './schemas/project.schema';
+import { Permissions } from '../../decorators/permissions.decorator';
 
 @ApiCookieAuth()
 @ApiTags('Projects')
-@UseGuards(JwtAuthenticationGuard)
+@Auth(Action.ReadWorkspace)
 @Controller('api/workspaces/:workspaceId/projects')
 @UseInterceptors(WorkspaceInterceptor, new TransformInterceptor(ProjectDto))
 export class ProjectsController {
@@ -50,6 +51,7 @@ export class ProjectsController {
    * @param createProjectDto the project to create
    */
   @Post()
+  @Permissions(Action.CreateProject)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiOperation({ summary: 'Create a new project' })
   @ApiCreatedResponse({
@@ -79,6 +81,7 @@ export class ProjectsController {
    * @param workspaceId the workspace id
    */
   @Get()
+  @Permissions(Action.ReadProject)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiOperation({ summary: 'Get all projects' })
   @ApiOkResponse({
@@ -108,6 +111,7 @@ export class ProjectsController {
    * @param projectId the project id
    */
   @Get(':id')
+  @Permissions(Action.ReadProject)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiParam({ name: 'id', description: 'The project id' })
   @ApiOperation({ summary: 'Get a project' })
@@ -140,6 +144,7 @@ export class ProjectsController {
    * @param updateProjectDto the updated project
    */
   @Put(':id')
+  @Permissions(Action.UpdateProject)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiParam({ name: 'id', description: 'The project id' })
   @ApiOperation({ summary: 'Update a project' })
@@ -178,6 +183,7 @@ export class ProjectsController {
    * @param projectId the project id
    */
   @Delete(':id')
+  @Permissions(Action.DeleteProject)
   @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
   @ApiParam({ name: 'id', description: 'The project id' })
   @ApiOperation({ summary: 'Delete a project' })

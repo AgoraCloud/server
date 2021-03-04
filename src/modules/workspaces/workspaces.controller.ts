@@ -1,3 +1,5 @@
+import { Action } from './../authorization/schemas/permission.schema';
+import { Permissions } from './../../decorators/permissions.decorator';
 import { ExceptionDto } from './../../utils/base.dto';
 import {
   ApiTags,
@@ -46,6 +48,7 @@ export class WorkspacesController {
    * @param createWorkspaceDto the workspace to create
    */
   @Post()
+  @Permissions(Action.CreateWorkspace)
   @ApiOperation({ summary: 'Create a workspace' })
   @ApiCreatedResponse({
     description: 'The workspace has been successfully created',
@@ -68,6 +71,7 @@ export class WorkspacesController {
    * @param userId the users id
    */
   @Get()
+  @Permissions(Action.ReadWorkspace)
   @ApiOperation({ summary: 'Get all workspaces' })
   @ApiOkResponse({
     description: 'The workspaces have been successfully retrieved',
@@ -84,6 +88,7 @@ export class WorkspacesController {
    * @param workspaceId the workspace id
    */
   @Get(':id')
+  @Permissions(Action.ReadWorkspace)
   @ApiParam({ name: 'id', description: 'The workspace id' })
   @ApiOperation({ summary: 'Get a workspace' })
   @ApiOkResponse({
@@ -113,6 +118,7 @@ export class WorkspacesController {
    * @param updateWorkspaceDto the updated workspace
    */
   @Put(':id')
+  @Permissions(Action.UpdateWorkspace)
   @ApiParam({ name: 'id', description: 'The workspace id' })
   @ApiOperation({ summary: 'Update a workspace' })
   @ApiOkResponse({
@@ -146,6 +152,7 @@ export class WorkspacesController {
    * @param workspaceId the workspace id
    */
   @Delete(':id')
+  @Permissions(Action.DeleteWorkspace)
   @ApiParam({ name: 'id', description: 'The workspace id' })
   @ApiOperation({ summary: 'Delete a workspace' })
   @ApiOkResponse({
