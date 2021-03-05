@@ -1,7 +1,6 @@
 import { DeploymentsService } from './../deployments/deployments.service';
 import { InvalidMongoIdException } from './../../exceptions/invalid-mongo-id.exception';
 import { isMongoId } from 'class-validator';
-import { DeploymentDocument } from './../deployments/schemas/deployment.schema';
 import { HttpAdapterHost } from '@nestjs/core';
 import { Request, Response } from 'express';
 import {
@@ -13,11 +12,10 @@ import {
 import * as HttpProxy from 'http-proxy';
 import { Server } from 'http';
 import { Socket } from 'net';
+import { resourcePrefix } from '../kubernetes/helpers';
 
 @Injectable()
 export class ProxyService implements OnModuleInit {
-  private readonly resourcePrefix: string = 'agoracloud';
-
   constructor(
     @Inject(HttpProxy) private readonly httpProxy: HttpProxy,
     private readonly httpAdapterHost: HttpAdapterHost,
@@ -52,19 +50,26 @@ export class ProxyService implements OnModuleInit {
     httpServer.on(
       'upgrade',
       async (req: Request, socket: Socket, head: any) => {
-        const deploymentId: string = req.url.split('/')[2];
+        const url: string[] = req.url.split('/');
+        const workspaceId: string = url[2];
+        const deploymentId: string = url[4];
+        if (!isMongoId(workspaceId)) {
+          throw new InvalidMongoIdException('workspaceId');
+        }
         if (!isMongoId(deploymentId)) {
           throw new InvalidMongoIdException('deploymentId');
         }
-        const deployment: DeploymentDocument = await this.deploymentsService.findOne(
+        await this.deploymentsService.findOne(
           deploymentId,
+          undefined,
+          workspaceId,
         );
-        req.url = this.removeProxyUrlPrefix(req.url, deploymentId);
+        req.url = this.removeProxyUrlPrefix(req.url, workspaceId, deploymentId);
         this.httpProxy.ws(
           req,
           socket,
           head,
-          this.makeProxyOptions(deployment.workspace._id, deploymentId),
+          this.makeProxyOptions(workspaceId, deploymentId),
         );
       },
     );
@@ -72,17 +77,22 @@ export class ProxyService implements OnModuleInit {
 
   /**
    * Proxy all deployment requests
-   * @param deployment the deployment
+   * @param workspaceId the workspace id
+   * @param deploymentId the deployment id
    * @param req the request
    * @param res the response
    */
-  proxy(deployment: DeploymentDocument, req: Request, res: Response): void {
-    const deploymentId: string = deployment._id;
-    req.url = this.removeProxyUrlPrefix(req.url, deploymentId);
+  proxy(
+    workspaceId: string,
+    deploymentId: string,
+    req: Request,
+    res: Response,
+  ): void {
+    req.url = this.removeProxyUrlPrefix(req.url, workspaceId, deploymentId);
     this.httpProxy.web(
       req,
       res,
-      this.makeProxyOptions(deployment.workspace._id, deploymentId),
+      this.makeProxyOptions(workspaceId, deploymentId),
     );
   }
 
@@ -96,20 +106,25 @@ export class ProxyService implements OnModuleInit {
     deploymentId: string,
   ): HttpProxy.ServerOptions {
     return {
-      target: `http://${this.resourcePrefix}-${deploymentId}.${this.resourcePrefix}-${workspaceId}.svc.cluster.local`,
+      target: `http://${resourcePrefix}-${deploymentId}.${resourcePrefix}-${workspaceId}.svc.cluster.local`,
       changeOrigin: true,
     };
   }
 
   /**
-   * Removes the /proxy/:deploymentId prefix from request urls
+   * Removes the proxy prefix from request urls
    * @param requestUrl the request url
+   * @param workspaceId the workspace id
    * @param deploymentId the deployment id
    */
   private removeProxyUrlPrefix(
     requestUrl: string,
+    workspaceId: string,
     deploymentId: string,
   ): string {
-    return requestUrl.replace(`/proxy/${deploymentId}`, '');
+    return requestUrl.replace(
+      `/workspaces/${workspaceId}/deployments/${deploymentId}/proxy`,
+      '',
+    );
   }
 }
