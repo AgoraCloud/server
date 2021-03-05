@@ -1,6 +1,7 @@
 import { DeploymentsService } from './../deployments/deployments.service';
 import { InvalidMongoIdException } from './../../exceptions/invalid-mongo-id.exception';
 import { isMongoId } from 'class-validator';
+import { DeploymentDocument } from './../deployments/schemas/deployment.schema';
 import { HttpAdapterHost } from '@nestjs/core';
 import { Request, Response } from 'express';
 import {
@@ -50,26 +51,19 @@ export class ProxyService implements OnModuleInit {
     httpServer.on(
       'upgrade',
       async (req: Request, socket: Socket, head: any) => {
-        const url: string[] = req.url.split('/');
-        const workspaceId: string = url[2];
-        const deploymentId: string = url[4];
-        if (!isMongoId(workspaceId)) {
-          throw new InvalidMongoIdException('workspaceId');
-        }
+        const deploymentId: string = req.url.split('/')[2];
         if (!isMongoId(deploymentId)) {
           throw new InvalidMongoIdException('deploymentId');
         }
-        await this.deploymentsService.findOne(
+        const deployment: DeploymentDocument = await this.deploymentsService.findOne(
           deploymentId,
-          undefined,
-          workspaceId,
         );
-        req.url = this.removeProxyUrlPrefix(req.url, workspaceId, deploymentId);
+        req.url = this.removeProxyUrlPrefix(req.url, deploymentId);
         this.httpProxy.ws(
           req,
           socket,
           head,
-          this.makeProxyOptions(workspaceId, deploymentId),
+          this.makeProxyOptions(deployment.workspace._id, deploymentId),
         );
       },
     );
@@ -77,22 +71,17 @@ export class ProxyService implements OnModuleInit {
 
   /**
    * Proxy all deployment requests
-   * @param workspaceId the workspace id
-   * @param deploymentId the deployment id
+   * @param deployment the deployment
    * @param req the request
    * @param res the response
    */
-  proxy(
-    workspaceId: string,
-    deploymentId: string,
-    req: Request,
-    res: Response,
-  ): void {
-    req.url = this.removeProxyUrlPrefix(req.url, workspaceId, deploymentId);
+  proxy(deployment: DeploymentDocument, req: Request, res: Response): void {
+    const deploymentId: string = deployment._id;
+    req.url = this.removeProxyUrlPrefix(req.url, deploymentId);
     this.httpProxy.web(
       req,
       res,
-      this.makeProxyOptions(workspaceId, deploymentId),
+      this.makeProxyOptions(deployment.workspace._id, deploymentId),
     );
   }
 
@@ -112,19 +101,14 @@ export class ProxyService implements OnModuleInit {
   }
 
   /**
-   * Removes the proxy prefix from request urls
+   * Removes the /proxy/:deploymentId prefix from request urls
    * @param requestUrl the request url
-   * @param workspaceId the workspace id
    * @param deploymentId the deployment id
    */
   private removeProxyUrlPrefix(
     requestUrl: string,
-    workspaceId: string,
     deploymentId: string,
   ): string {
-    return requestUrl.replace(
-      `/workspaces/${workspaceId}/deployments/${deploymentId}/proxy`,
-      '',
-    );
+    return requestUrl.replace(`/proxy/${deploymentId}`, '');
   }
 }
