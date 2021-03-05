@@ -1,3 +1,4 @@
+import { Auth } from 'src/decorators/auth.decorator';
 import { Action } from './../authorization/schemas/permission.schema';
 import { Permissions } from './../../decorators/permissions.decorator';
 import { ExceptionDto } from './../../utils/base.dto';
@@ -16,7 +17,6 @@ import { WorkspaceDto } from './dto/workspace.dto';
 import { TransformInterceptor } from './../../interceptors/transform.interceptor';
 import { WorkspaceDocument } from './schemas/workspace.schema';
 import { UserDocument } from '../users/schemas/user.schema';
-import { JwtAuthenticationGuard } from '../authentication/guards/jwt-authentication.guard';
 import { FindOneParams } from './../../utils/find-one-params';
 import {
   Controller,
@@ -26,7 +26,6 @@ import {
   Put,
   Param,
   Delete,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { WorkspacesService } from './workspaces.service';
@@ -37,7 +36,7 @@ import { User } from '../../decorators/user.decorator';
 @ApiCookieAuth()
 @ApiTags('Workspaces')
 @Controller('api/workspaces')
-@UseGuards(JwtAuthenticationGuard)
+@Auth()
 @UseInterceptors(new TransformInterceptor(WorkspaceDto))
 export class WorkspacesController {
   constructor(private readonly workspacesService: WorkspacesService) {}
