@@ -1,3 +1,4 @@
+import { WorkspaceNotFoundException } from './../../exceptions/workspace-not-found.exception';
 import { UserDocument } from './../users/schemas/user.schema';
 import { WorkspaceDocument } from './../workspaces/schemas/workspace.schema';
 import { WorkspaceDeletedEvent } from './../../events/workspace-deleted.event';
@@ -206,7 +207,9 @@ export class AuthorizationService {
     const workspaceRolesAndPermissions: WorkspaceRolesAndPermissions = permission.workspaces.get(
       workspaceId,
     );
-    if (!workspaceRolesAndPermissions) return false;
+    if (!workspaceRolesAndPermissions) {
+      throw new WorkspaceNotFoundException(workspaceId);
+    }
     if (workspaceRolesAndPermissions.roles.includes(Role.WorkspaceAdmin)) {
       return true;
     } else {
