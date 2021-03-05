@@ -1,3 +1,4 @@
+import { ProxyAuthorizationInterceptor } from './../../interceptors/proxy-authorization.interceptor';
 import { ExceptionDto } from './../../utils/base.dto';
 import {
   ApiTags,
@@ -25,7 +26,7 @@ import { Deployment } from '../../decorators/deployment.decorator';
 @ApiTags('Proxy')
 @Controller('proxy/:deploymentId')
 @UseGuards(JwtAuthenticationGuard)
-@UseInterceptors(DeploymentInterceptor)
+@UseInterceptors(DeploymentInterceptor, ProxyAuthorizationInterceptor)
 export class ProxyController {
   constructor(private readonly proxyService: ProxyService) {}
 

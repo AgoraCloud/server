@@ -30,6 +30,10 @@ interface RequestWithProjectLane extends Request {
   projectLane: ProjectLaneDocument;
 }
 
+interface RequestWithDeploymentAndUser extends RequestWithUser {
+  deployment: DeploymentDocument;
+}
+
 interface RequestWithWorkspaceAndUser extends RequestWithUser {
   workspace: WorkspaceDocument;
 }
@@ -61,6 +65,7 @@ export {
   RequestWithWikiSection,
   RequestWithProject,
   RequestWithProjectLane,
+  RequestWithDeploymentAndUser,
   RequestWithWorkspaceAndUser,
   RequestWithWorkspaceDeploymentAndUser,
   RequestWithWorkspaceUserAndWikiSection,
