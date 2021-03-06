@@ -58,9 +58,14 @@ export class UsersService implements OnModuleInit {
         password: await bcrypt.hash(adminConfig.password, 10),
         isVerified: true,
       });
-      this.eventEmitter.emit(
-        Event.UserCreated,
-        new UserCreatedEvent(createdUser, undefined, Role.SuperAdmin),
+      // Add an artificial delay, the event emitter does not emit any events on initialization
+      setTimeout(
+        () =>
+          this.eventEmitter.emit(
+            Event.UserCreated,
+            new UserCreatedEvent(createdUser, undefined, Role.SuperAdmin),
+          ),
+        2000,
       );
     }
   }
