@@ -7,7 +7,7 @@ import { WorkspaceCreatedEvent } from './../../events/workspace-created.event';
 import { UserDeletedEvent } from './../../events/user-deleted.event';
 import { UserCreatedEvent } from './../../events/user-created.event';
 import { InjectModel } from '@nestjs/mongoose';
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import {
   Action,
   Permission,
@@ -58,8 +58,7 @@ export class AuthorizationService {
       .where('user')
       .equals(userId)
       .exec();
-    // TODO: is this needed?
-    // if (!permission) throw new PermissionNotFoundException();
+    if (!permission) throw new InternalServerErrorException();
     return permission;
   }
 
