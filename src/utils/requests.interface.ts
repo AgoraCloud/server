@@ -46,6 +46,11 @@ interface RequestWithWorkspaceAndUser extends RequestWithUser {
   workspace: WorkspaceDocument;
 }
 
+interface RequestWithWorkspaceUserAndIsAdmin
+  extends RequestWithWorkspaceAndUser {
+  isAdmin: boolean;
+}
+
 interface RequestWithWorkspaceDeploymentAndUser
   extends RequestWithWorkspaceAndUser {
   deployment: DeploymentDocument;
@@ -77,6 +82,7 @@ export {
   RequestWithUserAndIsAdmin,
   RequestWithDeploymentAndUser,
   RequestWithWorkspaceAndUser,
+  RequestWithWorkspaceUserAndIsAdmin,
   RequestWithWorkspaceDeploymentAndUser,
   RequestWithWorkspaceUserAndWikiSection,
   RequestWithWorkspaceUserAndProject,

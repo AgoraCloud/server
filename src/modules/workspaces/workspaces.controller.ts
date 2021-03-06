@@ -33,6 +33,7 @@ import { WorkspacesService } from './workspaces.service';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
 import { User } from '../../decorators/user.decorator';
+import { IsAdmin } from 'src/decorators/is-admin.decorator';
 
 @ApiCookieAuth()
 @ApiTags('Workspaces')
@@ -80,7 +81,13 @@ export class WorkspacesController {
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
   @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
-  findAll(@User('_id') userId: string): Promise<WorkspaceDocument[]> {
+  findAll(
+    @User('_id') userId: string,
+    @IsAdmin() isAdmin: boolean,
+  ): Promise<WorkspaceDocument[]> {
+    if (isAdmin) {
+      return this.workspacesService.findAll();
+    }
     return this.workspacesService.findAll(userId);
   }
 
@@ -109,9 +116,13 @@ export class WorkspacesController {
   })
   findOne(
     @User('_id') userId: string,
+    @IsAdmin() isAdmin: boolean,
     @Param() { id: workspaceId }: FindOneParams,
   ): Promise<WorkspaceDocument> {
-    return this.workspacesService.findOne(userId, workspaceId);
+    if (isAdmin) {
+      return this.workspacesService.findOne(workspaceId);
+    }
+    return this.workspacesService.findOne(workspaceId, userId);
   }
 
   /**
@@ -140,13 +151,17 @@ export class WorkspacesController {
   })
   update(
     @User('_id') userId: string,
+    @IsAdmin() isAdmin: boolean,
     @Param() { id: workspaceId }: FindOneParams,
     @Body() updateWorkspaceDto: UpdateWorkspaceDto,
   ): Promise<WorkspaceDocument> {
+    if (isAdmin) {
+      return this.workspacesService.update(workspaceId, updateWorkspaceDto);
+    }
     return this.workspacesService.update(
-      userId,
       workspaceId,
       updateWorkspaceDto,
+      userId,
     );
   }
 
@@ -174,8 +189,12 @@ export class WorkspacesController {
   })
   remove(
     @User('_id') userId: string,
+    @IsAdmin() isAdmin: boolean,
     @Param() { id: workspaceId }: FindOneParams,
   ): Promise<void> {
-    return this.workspacesService.remove(userId, workspaceId);
+    if (isAdmin) {
+      return this.workspacesService.remove(workspaceId);
+    }
+    return this.workspacesService.remove(workspaceId, userId);
   }
 }
