@@ -30,6 +30,14 @@ interface RequestWithProjectLane extends Request {
   projectLane: ProjectLaneDocument;
 }
 
+interface RequestWithIsAdmin extends Request {
+  isAdmin: boolean;
+}
+
+interface RequestWithUserAndIsAdmin extends RequestWithUser {
+  isAdmin: boolean;
+}
+
 interface RequestWithDeploymentAndUser extends RequestWithUser {
   deployment: DeploymentDocument;
 }
@@ -65,6 +73,8 @@ export {
   RequestWithWikiSection,
   RequestWithProject,
   RequestWithProjectLane,
+  RequestWithIsAdmin,
+  RequestWithUserAndIsAdmin,
   RequestWithDeploymentAndUser,
   RequestWithWorkspaceAndUser,
   RequestWithWorkspaceDeploymentAndUser,

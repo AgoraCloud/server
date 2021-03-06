@@ -176,7 +176,7 @@ export class AuthorizationService {
     user: UserDocument,
     neededPermissions: Action[],
     workspaceId?: string,
-  ): Promise<boolean> {
+  ): Promise<{ canActivate: boolean; isAdmin: boolean }> {
     const permission: PermissionDocument = await this.findOne(user._id);
     const grantedPermissions: Action[] = permission.permissions;
 
@@ -198,9 +198,12 @@ export class AuthorizationService {
     };
 
     if (permission.roles.includes(Role.SuperAdmin)) {
-      return true;
+      return { canActivate: true, isAdmin: true };
     } else if (!workspaceId) {
-      return hasPermissions(grantedPermissions, neededPermissions);
+      return {
+        canActivate: hasPermissions(grantedPermissions, neededPermissions),
+        isAdmin: false,
+      };
     }
 
     const workspaceRolesAndPermissions: WorkspaceRolesAndPermissions = permission.workspaces.get(
@@ -210,12 +213,15 @@ export class AuthorizationService {
       throw new WorkspaceNotFoundException(workspaceId);
     }
     if (workspaceRolesAndPermissions.roles.includes(Role.WorkspaceAdmin)) {
-      return true;
+      return { canActivate: true, isAdmin: true };
     } else {
-      return hasPermissions(
-        [...grantedPermissions, ...workspaceRolesAndPermissions.permissions],
-        neededPermissions,
-      );
+      return {
+        canActivate: hasPermissions(
+          [...grantedPermissions, ...workspaceRolesAndPermissions.permissions],
+          neededPermissions,
+        ),
+        isAdmin: false,
+      };
     }
   }
 }

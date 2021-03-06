@@ -1,3 +1,4 @@
+import { WorkspaceNotFoundException } from './../../exceptions/workspace-not-found.exception';
 import { UserDocument } from './../users/schemas/user.schema';
 import {
   Permission,
@@ -34,6 +35,7 @@ describe('AuthorizationService', () => {
   let service: AuthorizationService;
   let connection: Connection;
   let permissionsModel: Model<PermissionDocument>;
+  let permissions: PermissionDocument;
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -57,18 +59,15 @@ describe('AuthorizationService', () => {
     // Create a permissions entry for the user
     const permission: Permission = new Permission({
       user,
+      roles: [Role.SuperAdmin],
+      permissions: [],
       workspaces: new Map(),
     });
     permission.workspaces.set(workspaceId, {
-      roles: [Role.User],
-      permissions: [
-        Action.CreateDeployment,
-        Action.ReadDeployment,
-        Action.UpdateDeployment,
-        Action.DeleteDeployment,
-      ],
+      roles: [Role.WorkspaceAdmin],
+      permissions: [],
     });
-    await permissionsModel.create(permission);
+    permissions = await permissionsModel.create(permission);
   });
 
   afterAll(async () => {
@@ -81,7 +80,7 @@ describe('AuthorizationService', () => {
   });
 
   describe('findOne', () => {
-    it('should throw an error if the permission for the given user was not found', async () => {
+    it('should throw an error if the permissions for the given user were not found', async () => {
       const userId: string = Types.ObjectId().toHexString();
       const expectedErrorMessage: string = new InternalServerErrorException()
         .message;
@@ -101,22 +100,104 @@ describe('AuthorizationService', () => {
   });
 
   describe('can', () => {
-    it('should return true if the user has sufficient permissions', async () => {
-      const can: boolean = await service.can(
+    it('should grant a super admin any permissions needed', async () => {
+      const { canActivate, isAdmin } = await service.can(user, [
+        Action.CreateWorkspace,
+        Action.ReadWorkspace,
+        Action.ProxyDeployment,
+        Action.CreateDeployment,
+      ]);
+      expect(canActivate).toBe(true);
+      expect(isAdmin).toBe(true);
+    });
+
+    it('should not grant a user application-wide permissions they do not have', async () => {
+      // Demote the user to the 'user' role application-wide
+      permissions = await permissionsModel
+        .findOneAndUpdate(
+          { _id: permissions._id },
+          { roles: [Role.User], permissions: [Action.ReadWorkspace] },
+          { new: true },
+        )
+        .exec();
+      const { canActivate, isAdmin } = await service.can(user, [
+        Action.CreateWorkspace,
+      ]);
+      expect(canActivate).toBe(false);
+      expect(isAdmin).toBe(false);
+    });
+
+    it('should grant a user application-wide permissions that they have', async () => {
+      const { canActivate, isAdmin } = await service.can(user, [
+        Action.ReadWorkspace,
+      ]);
+      expect(canActivate).toBe(true);
+      expect(isAdmin).toBe(false);
+    });
+
+    it('should throw an error if the permissions for the given workspace id and user were not found', async () => {
+      const workspaceId: string = Types.ObjectId().toHexString();
+      const expectedErrorMessage: string = new WorkspaceNotFoundException(
+        workspaceId,
+      ).message;
+      try {
+        await service.can(
+          user,
+          [Action.ReadWorkspace, Action.ReadDeployment],
+          workspaceId,
+        );
+        fail('It should throw an error');
+      } catch (err) {
+        expect(err.message).toBe(expectedErrorMessage);
+      }
+    });
+
+    it('should grant a workspace admin any workspace-wide permissions needed', async () => {
+      const { canActivate, isAdmin } = await service.can(
+        user,
+        [
+          Action.ReadWorkspace,
+          Action.ProxyDeployment,
+          Action.CreateProject,
+          Action.DeleteWikiSection,
+        ],
+        workspaceId,
+      );
+      expect(canActivate).toBe(true);
+      expect(isAdmin).toBe(true);
+    });
+
+    it('should not grant a workspace user any workspace-wide permissions they do not have', async () => {
+      // Demote the user to the 'user' role workspace-wide
+      permissions.workspaces.set(workspaceId, {
+        roles: [Role.User],
+        permissions: [
+          Action.CreateDeployment,
+          Action.ReadDeployment,
+          Action.ProxyDeployment,
+        ],
+      });
+      permissions = await permissionsModel
+        .findOneAndUpdate({ _id: permissions._id }, permissions, { new: true })
+        .exec();
+
+      const { canActivate, isAdmin } = await service.can(
+        user,
+        [Action.ReadWorkspace, Action.DeleteDeployment],
+        workspaceId,
+      );
+      expect(canActivate).toBe(false);
+      expect(isAdmin).toBe(false);
+    });
+
+    it('should grant a workspace user any workspace-wide permissions they have', async () => {
+      const { canActivate, isAdmin } = await service.can(
         user,
         [Action.ReadWorkspace, Action.CreateDeployment],
         workspaceId,
       );
-      expect(can).toBe(true);
-    });
-
-    it('should return false if the user does not have sufficient permissions', async () => {
-      const can: boolean = await service.can(
-        user,
-        [Action.ReadWorkspace, Action.ReadDeployment, Action.ProxyDeployment],
-        workspaceId,
-      );
-      expect(can).toBe(false);
+      expect(canActivate).toBe(true);
+      expect(isAdmin).toBe(false);
     });
   });
 });

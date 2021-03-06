@@ -4,7 +4,7 @@ import { UserDocument } from './../../users/schemas/user.schema';
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_KEY } from '../../../decorators/permissions.decorator';
-import { RequestWithUser } from '../../../utils/requests.interface';
+import { RequestWithUserAndIsAdmin } from '../../../utils/requests.interface';
 
 @Injectable()
 export class AuthorizationGuard implements CanActivate {
@@ -20,9 +20,17 @@ export class AuthorizationGuard implements CanActivate {
         context.getHandler(),
       ]) || [];
     if (!permissions.length) return true;
-    const request: RequestWithUser = context.switchToHttp().getRequest();
+    const request: RequestWithUserAndIsAdmin = context
+      .switchToHttp()
+      .getRequest();
     const user: UserDocument = request.user;
     const workspaceId: string = request.params.workspaceId;
-    return this.authorizationService.can(user, permissions, workspaceId);
+    const { canActivate, isAdmin } = await this.authorizationService.can(
+      user,
+      permissions,
+      workspaceId,
+    );
+    request.isAdmin = isAdmin;
+    return canActivate;
   }
 }
