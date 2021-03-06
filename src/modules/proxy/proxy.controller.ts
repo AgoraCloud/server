@@ -6,6 +6,7 @@ import {
   ApiUnauthorizedResponse,
   ApiInternalServerErrorResponse,
   ApiOperation,
+  ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { DeploymentDocument } from './../deployments/schemas/deployment.schema';
 import { ProxyService } from './proxy.service';
@@ -39,6 +40,7 @@ export class ProxyController {
   @All()
   @ApiOperation({ summary: 'Proxy a deployment API request' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiInternalServerErrorResponse({
     description: 'An error occurred when the api request was being proxied',
     type: ExceptionDto,

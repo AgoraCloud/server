@@ -12,6 +12,7 @@ import {
   ApiOkResponse,
   ApiParam,
   ApiOperation,
+  ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { FindOneParams } from './../../../utils/find-one-params';
 import { ProjectLaneDocument } from './../lanes/schemas/lane.schema';
@@ -81,6 +82,7 @@ export class ProjectTasksController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description:
       'The workspace, project or project lane with the given id was not found',
@@ -125,6 +127,7 @@ export class ProjectTasksController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description:
       'The workspace, project or project lane with the given id was not found',
@@ -169,6 +172,7 @@ export class ProjectTasksController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description:
       'The workspace, project, project lane or project task with the given id was not found',
@@ -216,6 +220,7 @@ export class ProjectTasksController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description:
       'The workspace, project, project lane or project task with the given id was not found',
@@ -263,6 +268,7 @@ export class ProjectTasksController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description:
       'The workspace, project, project lane or project task with the given id was not found',

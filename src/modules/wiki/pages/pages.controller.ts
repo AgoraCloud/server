@@ -12,6 +12,7 @@ import {
   ApiOkResponse,
   ApiParam,
   ApiOperation,
+  ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { FindOneParams } from './../../../utils/find-one-params';
 import { WikiSectionDocument } from '../../wiki/sections/schemas/section.schema';
@@ -73,6 +74,7 @@ export class WikiPagesController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description:
       'The workspace or wiki section with the given id was not found',
@@ -112,6 +114,7 @@ export class WikiPagesController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description:
       'The workspace or wiki section with the given id was not found',
@@ -148,6 +151,7 @@ export class WikiPagesController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description:
       'The workspace, wiki section or wiki page with the given id was not found',
@@ -191,6 +195,7 @@ export class WikiPagesController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description:
       'The workspace, wiki section or wiki page with the given id was not found',
@@ -234,6 +239,7 @@ export class WikiPagesController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description:
       'The workspace, wiki section or wiki page with the given id was not found',

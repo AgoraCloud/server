@@ -11,6 +11,7 @@ import {
   ApiOkResponse,
   ApiParam,
   ApiOperation,
+  ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { FindOneParams } from './../../utils/find-one-params';
 import { WorkspaceDocument } from './../workspaces/schemas/workspace.schema';
@@ -63,6 +64,7 @@ export class ProjectsController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description: 'The workspace with the given id was not found',
     type: ExceptionDto,
@@ -93,6 +95,7 @@ export class ProjectsController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description: 'The workspace with the given id was not found',
     type: ExceptionDto,
@@ -124,6 +127,7 @@ export class ProjectsController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description: 'The workspace or project with the given id was not found',
     type: ExceptionDto,
@@ -158,6 +162,7 @@ export class ProjectsController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description: 'The workspace or project with the given id was not found',
     type: ExceptionDto,
@@ -195,6 +200,7 @@ export class ProjectsController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description: 'The workspace or project with the given id was not found',
     type: ExceptionDto,

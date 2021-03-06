@@ -13,6 +13,7 @@ import {
   ApiBadRequestResponse,
   ApiOperation,
   ApiParam,
+  ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { DeploymentInterceptor } from '../../interceptors/deployment.interceptor';
 import { MetricsDto } from './dto/metrics.dto';
@@ -53,6 +54,7 @@ export class KubernetesController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description: 'The workspace or deployment with the given id was not found',
     type: ExceptionDto,
@@ -90,6 +92,7 @@ export class KubernetesController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description: 'The workspace or deployment with the given id was not found',
     type: ExceptionDto,
@@ -125,6 +128,7 @@ export class KubernetesController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description: 'The workspace with the given id was not found',
     type: ExceptionDto,

@@ -12,6 +12,7 @@ import {
   ApiNotFoundResponse,
   ApiParam,
   ApiOperation,
+  ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { WorkspaceDto } from './dto/workspace.dto';
 import { TransformInterceptor } from './../../interceptors/transform.interceptor';
@@ -58,6 +59,7 @@ export class WorkspacesController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   create(
     @User() user: UserDocument,
     @Body() createWorkspaceDto: CreateWorkspaceDto,
@@ -77,6 +79,7 @@ export class WorkspacesController {
     type: [WorkspaceDto],
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   findAll(@User('_id') userId: string): Promise<WorkspaceDocument[]> {
     return this.workspacesService.findAll(userId);
   }
@@ -99,6 +102,7 @@ export class WorkspacesController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description: 'The workspace with the given id was not found',
     type: ExceptionDto,
@@ -129,6 +133,7 @@ export class WorkspacesController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description: 'The workspace with the given id was not found',
     type: ExceptionDto,
@@ -162,6 +167,7 @@ export class WorkspacesController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description: 'The workspace with the given id was not found',
     type: ExceptionDto,

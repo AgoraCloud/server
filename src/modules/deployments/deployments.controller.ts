@@ -10,6 +10,7 @@ import {
   ApiOkResponse,
   ApiParam,
   ApiOperation,
+  ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { DeploymentDto, DeploymentImageDto } from './dto/deployment.dto';
 import { TransformInterceptor } from './../../interceptors/transform.interceptor';
@@ -66,6 +67,7 @@ export class DeploymentsController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description: 'The workspace with the given id was not found',
     type: ExceptionDto,
@@ -93,6 +95,7 @@ export class DeploymentsController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description: 'The workspace with the given id was not found',
     type: ExceptionDto,
@@ -119,6 +122,7 @@ export class DeploymentsController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description: 'The workspace with the given id was not found',
     type: ExceptionDto,
@@ -150,6 +154,7 @@ export class DeploymentsController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description: 'The workspace or deployment with the given id was not found',
     type: ExceptionDto,
@@ -184,6 +189,7 @@ export class DeploymentsController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description: 'The workspace or deployment with the given id was not found',
     type: ExceptionDto,
@@ -221,6 +227,7 @@ export class DeploymentsController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description: 'The workspace or deployment with the given id was not found',
     type: ExceptionDto,

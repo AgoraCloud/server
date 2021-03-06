@@ -12,6 +12,7 @@ import {
   ApiNotFoundResponse,
   ApiParam,
   ApiOperation,
+  ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { FindOneParams } from './../../../utils/find-one-params';
 import { ProjectDocument } from './../schemas/project.schema';
@@ -73,6 +74,7 @@ export class ProjectLanesController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description: 'The workspace or project with the given id was not found',
     type: ExceptionDto,
@@ -111,6 +113,7 @@ export class ProjectLanesController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description: 'The workspace or project with the given id was not found',
     type: ExceptionDto,
@@ -146,6 +149,7 @@ export class ProjectLanesController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description:
       'The workspace, project or project lane with the given id was not found',
@@ -189,6 +193,7 @@ export class ProjectLanesController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description:
       'The workspace, project or project lane with the given id was not found',
@@ -232,6 +237,7 @@ export class ProjectLanesController {
     type: ExceptionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
   @ApiNotFoundResponse({
     description:
       'The workspace, project or project lane with the given id was not found',
