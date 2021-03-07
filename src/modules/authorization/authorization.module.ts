@@ -1,3 +1,4 @@
+import { WorkspacesModule } from './../workspaces/workspaces.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Module, Global } from '@nestjs/common';
 import { AuthorizationService } from './authorization.service';
@@ -10,6 +11,7 @@ import { Permission, PermissionSchema } from './schemas/permission.schema';
     MongooseModule.forFeature([
       { name: Permission.name, schema: PermissionSchema },
     ]),
+    WorkspacesModule,
   ],
   controllers: [AuthorizationController],
   providers: [AuthorizationService],

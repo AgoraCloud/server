@@ -1,3 +1,4 @@
+import { UserWithIdNotFoundException } from './../../exceptions/user-not-found.exception';
 import { UserDeletedEvent } from './../../events/user-deleted.event';
 import { UserCreatedEvent } from '../../events/user-created.event';
 import { Event } from './../../events/events.enum';
@@ -95,30 +96,6 @@ export class UsersService implements OnModuleInit {
   }
 
   /**
-   * Update a user
-   * @param userId the users id
-   * @param updateUserDto the updated user
-   */
-  async update(
-    userId: string,
-    updateUserDto: UpdateUserDto,
-  ): Promise<UserDocument> {
-    const user: UserDocument = await this.userModel
-      .findOneAndUpdate({ _id: userId }, updateUserDto, { new: true })
-      .exec();
-    return user;
-  }
-
-  /**
-   * Delete a user
-   * @param userId the users id
-   */
-  async remove(userId: string): Promise<void> {
-    await this.userModel.deleteOne({ _id: userId }).exec();
-    this.eventEmitter.emit(Event.UserDeleted, new UserDeletedEvent(userId));
-  }
-
-  /**
    * Find a user by email
    * @param email the users email
    */
@@ -146,6 +123,39 @@ export class UsersService implements OnModuleInit {
       user.latestRefreshToken,
     );
     if (refreshTokensMatch) return user;
+  }
+
+  /**
+   * Checks whether a user exists or not
+   * @param userId the users id
+   */
+  async doesExist(userId: string): Promise<void> {
+    const exists: boolean = await this.userModel.exists({ _id: userId });
+    if (!exists) throw new UserWithIdNotFoundException(userId);
+  }
+
+  /**
+   * Update a user
+   * @param userId the users id
+   * @param updateUserDto the updated user
+   */
+  async update(
+    userId: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<UserDocument> {
+    const user: UserDocument = await this.userModel
+      .findOneAndUpdate({ _id: userId }, updateUserDto, { new: true })
+      .exec();
+    return user;
+  }
+
+  /**
+   * Delete a user
+   * @param userId the users id
+   */
+  async remove(userId: string): Promise<void> {
+    await this.userModel.deleteOne({ _id: userId }).exec();
+    this.eventEmitter.emit(Event.UserDeleted, new UserDeletedEvent(userId));
   }
 
   /**

@@ -1,3 +1,5 @@
+import { UpdateWorkspaceUserPermissionsDto } from './dto/update-workspace-user-permissions.dto';
+import { UpdateUserPermissionsDto } from './dto/update-user-permissions.dto';
 import { WorkspaceNotFoundException } from './../../exceptions/workspace-not-found.exception';
 import { UserDocument } from './../users/schemas/user.schema';
 import { WorkspaceDocument } from './../workspaces/schemas/workspace.schema';
@@ -75,6 +77,26 @@ export class AuthorizationService {
       .equals(permission._id)
       .exec();
     return updatedPermission;
+  }
+
+  // TODO: add comments
+  // TODO: finish this
+  async updateUserPermissions(
+    userId: string,
+    updateUserPermissionsDto: UpdateUserPermissionsDto,
+  ): Promise<PermissionDocument> {
+    return;
+  }
+
+  // TODO: add comments
+  // TODO: finish this
+  async updateWorkspaceUserPermissions(
+    workspaceId: string,
+    userId: string,
+    updateWorkspaceUserPermissionsDto: UpdateWorkspaceUserPermissionsDto,
+  ): Promise<WorkspaceRolesAndPermissions> {
+    // TODO: get the users permissions, check if they have the workspace, if they dont throw an exception
+    return;
   }
 
   /**
@@ -189,6 +211,7 @@ export class AuthorizationService {
       grantedPermissions: Action[],
       neededPermissions: Action[],
     ): boolean => {
+      if (!grantedPermissions.length || !neededPermissions.length) return false;
       let hasPermissions = true;
       for (const action of neededPermissions) {
         hasPermissions = hasPermissions && grantedPermissions.includes(action);
