@@ -1,3 +1,4 @@
+import { UpdateWorkspaceUserPermissionsDto } from './dto/update-workspace-user-permissions.dto';
 import { UpdateUserPermissionsDto } from './dto/update-user-permissions.dto';
 import { UserNotInWorkspaceException } from './../../exceptions/user-not-in-workspace.exception';
 import { UserDocument } from './../users/schemas/user.schema';
@@ -272,6 +273,43 @@ describe('AuthorizationService', () => {
   });
 
   describe('updateUsersWorkspacePermissions', () => {
-    it('', async () => {});
+    it('should throw an error if the permissions for the given user and workspace were not found', async () => {
+      const workspaceId: string = Types.ObjectId().toHexString();
+      const updateWorkspaceUserPermissionsDto: UpdateWorkspaceUserPermissionsDto = {
+        roles: [Role.User],
+        permissions: [],
+      };
+      const expectedErrorMessage: string = new UserNotInWorkspaceException(
+        user._id,
+        workspaceId,
+      ).message;
+      try {
+        await service.updateUsersWorkspacePermissions(
+          user._id,
+          workspaceId,
+          updateWorkspaceUserPermissionsDto,
+        );
+        fail('It should throw an error');
+      } catch (err) {
+        expect(err.message).toBe(expectedErrorMessage);
+      }
+    });
+
+    it('should update the users workspace-wide roles and permissions', async () => {
+      const updateWorkspaceUserPermissionsDto: UpdateWorkspaceUserPermissionsDto = {
+        roles: [Role.WorkspaceAdmin],
+        permissions: [Action.CreateWikiSection],
+      };
+      const updatedPermissions: WorkspaceRolesAndPermissions = await service.updateUsersWorkspacePermissions(
+        user._id,
+        workspaceId,
+        updateWorkspaceUserPermissionsDto,
+      );
+      expect(updatedPermissions.roles.length).toBe(1);
+      expect(updatedPermissions.roles[0]).toBe(
+        updateWorkspaceUserPermissionsDto.roles[0],
+      );
+      expect(updatedPermissions.permissions.length).toBe(0);
+    });
   });
 });

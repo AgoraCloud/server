@@ -137,8 +137,19 @@ export class AuthorizationService {
     if (!workspaceRolesAndPermissions) {
       throw new UserNotInWorkspaceException(userId, workspaceId);
     }
-    // TODO: finish this
-    return;
+
+    workspaceRolesAndPermissions.roles =
+      updateWorkspaceUserPermissionsDto.roles;
+    // For now, a users roles can only contain one role
+    if (workspaceRolesAndPermissions.roles[0] === Role.WorkspaceAdmin) {
+      workspaceRolesAndPermissions.permissions = [];
+    } else {
+      workspaceRolesAndPermissions.permissions =
+        updateWorkspaceUserPermissionsDto.permissions;
+    }
+    permissions.workspaces.set(workspaceId, workspaceRolesAndPermissions);
+    await this.update(permissions);
+    return workspaceRolesAndPermissions;
   }
 
   /**

@@ -43,7 +43,7 @@ export class AuthorizationController {
   constructor(private readonly authorizationService: AuthorizationService) {}
 
   /**
-   * Get the logged in users permissions
+   * Get the logged in users permissions (application-wide and workspace-wide)
    * @param userId the users id
    */
   @Get('user/permissions')
@@ -134,6 +134,8 @@ export class AuthorizationController {
 
   /**
    * Update a users application-wide permissions, accessible by super admins only
+   * @param userId the users id
+   * @param updateUserPermissionsDto the updated application-wide user permissions
    */
   @Permissions(Action.ManageUser)
   @Put('users/:userId/permissions')
@@ -167,7 +169,13 @@ export class AuthorizationController {
     );
   }
 
-  // TODO: add comments and tags
+  /**
+   * Update a users workspace-wide permissions, accessible by super admins
+   * and workspace admins
+   * @param workspaceId the workspace id
+   * @param userId the users id
+   * @param updateWorkspaceUserPermissionsDto the updated workspace-wide user permissions
+   */
   @Permissions(Action.ManageWorkspace)
   @Put('workspaces/:workspaceId/users/:userId/permissions')
   @UseInterceptors(
@@ -175,6 +183,24 @@ export class AuthorizationController {
     UserInterceptor,
     new TransformInterceptor(RolesAndPermissionsDto),
   )
+  @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
+  @ApiParam({ name: 'userId', description: 'The users id' })
+  @ApiOperation({ summary: 'Update a users workspace-wide permissions' })
+  @ApiOkResponse({
+    description: 'The users permissions have been successfully updated',
+    type: RolesAndPermissionsDto,
+  })
+  @ApiBadRequestResponse({
+    description:
+      'The provided roles and permissions were not valid, the workspace id or user id were not valid or the users workspace-wide permissions could not be found',
+    type: ExceptionDto,
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
+  @ApiNotFoundResponse({
+    description: 'The workspace or user with the given id was not found',
+    type: ExceptionDto,
+  })
   updateUsersWorkspacePermissions(
     @Workspace('_id') workspaceId: string,
     @Param('userId') userId: string,
