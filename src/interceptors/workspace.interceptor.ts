@@ -30,12 +30,10 @@ export class WorkspaceInterceptor implements NestInterceptor {
 
     const user: UserDocument = request.user;
     const isAdmin: boolean = request.isAdmin;
-    let workspace: WorkspaceDocument;
-    if (isAdmin) {
-      workspace = await this.workspaceService.findOne(workspaceId);
-    } else {
-      workspace = await this.workspaceService.findOne(workspaceId, user._id);
-    }
+    const workspace: WorkspaceDocument = await this.workspaceService.findOne(
+      workspaceId,
+      isAdmin ? undefined : user._id,
+    );
     request.workspace = workspace;
     return next.handle();
   }

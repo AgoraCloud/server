@@ -109,7 +109,7 @@ describe('WikiSectionsService', () => {
         wikiSectionId,
       ).message;
       try {
-        await service.findOne(user._id, workspace._id, wikiSectionId);
+        await service.findOne(workspace._id, wikiSectionId, user._id);
         fail('It should throw an error');
       } catch (err) {
         expect(err.message).toBe(expectedErrorMessage);
@@ -118,9 +118,9 @@ describe('WikiSectionsService', () => {
 
     it('should find the wiki section in the given workspace for the given user', async () => {
       const retrievedWikiSection: WikiSectionDocument = await service.findOne(
-        user._id,
         workspace._id,
         wikiSectionId,
+        user._id,
       );
       expect(retrievedWikiSection._id).toEqual(wikiSectionId);
       expect(retrievedWikiSection.user._id).toEqual(user._id);
@@ -139,10 +139,10 @@ describe('WikiSectionsService', () => {
       ).message;
       try {
         await service.update(
-          user._id,
           workspace._id,
           wikiSectionId,
           updateWikiSectionDto,
+          user._id,
         );
         fail('It should throw an error');
       } catch (err) {
@@ -152,10 +152,10 @@ describe('WikiSectionsService', () => {
 
     it('should update the wiki section', async () => {
       const updatedWikiSection: WikiSectionDocument = await service.update(
-        user._id,
         workspace._id,
         wikiSectionId,
         updateWikiSectionDto,
+        user._id,
       );
       expect(updatedWikiSection._id).toEqual(wikiSectionId);
       expect(updatedWikiSection.name).toBe(updateWikiSectionDto.name);
@@ -169,7 +169,7 @@ describe('WikiSectionsService', () => {
         wikiSectionId,
       ).message;
       try {
-        await service.remove(user._id, workspace._id, wikiSectionId);
+        await service.remove(workspace._id, wikiSectionId, user._id);
         fail('It should throw an error');
       } catch (err) {
         expect(err.message).toBe(expectedErrorMessage);
@@ -181,7 +181,7 @@ describe('WikiSectionsService', () => {
         eventEmitter,
         'emit',
       );
-      await service.remove(user._id, workspace._id, wikiSectionId);
+      await service.remove(workspace._id, wikiSectionId, user._id);
       expect(eventEmitterSpy).toHaveBeenCalledTimes(1);
     });
   });

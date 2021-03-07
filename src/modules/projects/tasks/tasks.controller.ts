@@ -1,5 +1,6 @@
+import { IsAdmin } from '../../../decorators/is-admin.decorator';
 import { Permissions } from './../../../decorators/permissions.decorator';
-import { Auth } from 'src/decorators/auth.decorator';
+import { Auth } from '../../../decorators/auth.decorator';
 import { Action } from './../../authorization/schemas/permission.schema';
 import { ExceptionDto } from './../../../utils/base.dto';
 import {
@@ -135,10 +136,19 @@ export class ProjectTasksController {
   })
   findAll(
     @User('_id') userId: string,
+    @IsAdmin() isAdmin: boolean,
     @Workspace('_id') workspaceId: string,
     @Project('_id') projectId: string,
     @ProjectLane('_id') projectLaneId: string,
   ): Promise<ProjectTaskDocument[]> {
+    if (isAdmin) {
+      return this.projectTasksService.findAll(
+        projectLaneId,
+        undefined,
+        workspaceId,
+        projectId,
+      );
+    }
     return this.projectTasksService.findAll(
       projectLaneId,
       userId,
@@ -180,17 +190,26 @@ export class ProjectTasksController {
   })
   findOne(
     @User('_id') userId: string,
+    @IsAdmin() isAdmin: boolean,
     @Workspace('_id') workspaceId: string,
     @Project('_id') projectId: string,
     @ProjectLane('_id') projectLaneId: string,
     @Param() { id: projectTaskId }: FindOneParams,
   ): Promise<ProjectTaskDocument> {
+    if (isAdmin) {
+      return this.projectTasksService.findOne(
+        workspaceId,
+        projectId,
+        projectLaneId,
+        projectTaskId,
+      );
+    }
     return this.projectTasksService.findOne(
-      userId,
       workspaceId,
       projectId,
       projectLaneId,
       projectTaskId,
+      userId,
     );
   }
 
@@ -228,19 +247,29 @@ export class ProjectTasksController {
   })
   update(
     @User('_id') userId: string,
+    @IsAdmin() isAdmin: boolean,
     @Workspace('_id') workspaceId: string,
     @Project('_id') projectId: string,
     @ProjectLane('_id') projectLaneId: string,
     @Param() { id: projectTaskId }: FindOneParams,
     @Body() updateProjectTaskDto: UpdateProjectTaskDto,
   ): Promise<ProjectTaskDocument> {
+    if (isAdmin) {
+      return this.projectTasksService.update(
+        workspaceId,
+        projectId,
+        projectLaneId,
+        projectTaskId,
+        updateProjectTaskDto,
+      );
+    }
     return this.projectTasksService.update(
-      userId,
       workspaceId,
       projectId,
       projectLaneId,
       projectTaskId,
       updateProjectTaskDto,
+      userId,
     );
   }
 
@@ -276,17 +305,26 @@ export class ProjectTasksController {
   })
   remove(
     @User('_id') userId: string,
+    @IsAdmin() isAdmin: boolean,
     @Workspace('_id') workspaceId: string,
     @Project('_id') projectId: string,
     @ProjectLane('_id') projectLaneId: string,
     @Param() { id: projectTaskId }: FindOneParams,
   ): Promise<void> {
+    if (isAdmin) {
+      return this.projectTasksService.remove(
+        workspaceId,
+        projectId,
+        projectLaneId,
+        projectTaskId,
+      );
+    }
     return this.projectTasksService.remove(
-      userId,
       workspaceId,
       projectId,
       projectLaneId,
       projectTaskId,
+      userId,
     );
   }
 }

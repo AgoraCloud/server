@@ -1,5 +1,5 @@
 import { Action } from './../authorization/schemas/permission.schema';
-import { Auth } from 'src/decorators/auth.decorator';
+import { Auth } from '../../decorators/auth.decorator';
 import { ExceptionDto } from './../../utils/base.dto';
 import {
   ApiTags,
@@ -36,6 +36,7 @@ import { User } from '../../decorators/user.decorator';
 import { Workspace } from '../../decorators/workspace.decorator';
 import { ProjectDocument } from './schemas/project.schema';
 import { Permissions } from '../../decorators/permissions.decorator';
+import { IsAdmin } from '../../decorators/is-admin.decorator';
 
 @ApiCookieAuth()
 @ApiTags('Projects')
@@ -102,8 +103,12 @@ export class ProjectsController {
   })
   findAll(
     @User('_id') userId: string,
+    @IsAdmin() isAdmin: boolean,
     @Workspace('_id') workspaceId: string,
   ): Promise<ProjectDocument[]> {
+    if (isAdmin) {
+      return this.projectsService.findAll(workspaceId);
+    }
     return this.projectsService.findAll(workspaceId, userId);
   }
 
@@ -134,10 +139,14 @@ export class ProjectsController {
   })
   findOne(
     @User('_id') userId: string,
+    @IsAdmin() isAdmin: boolean,
     @Workspace('_id') workspaceId: string,
-    @Param() { id: deploymentId }: FindOneParams,
+    @Param() { id: projectId }: FindOneParams,
   ): Promise<ProjectDocument> {
-    return this.projectsService.findOne(userId, workspaceId, deploymentId);
+    if (isAdmin) {
+      return this.projectsService.findOne(workspaceId, projectId);
+    }
+    return this.projectsService.findOne(workspaceId, projectId, userId);
   }
 
   /**
@@ -169,15 +178,23 @@ export class ProjectsController {
   })
   update(
     @User('_id') userId: string,
+    @IsAdmin() isAdmin: boolean,
     @Workspace('_id') workspaceId: string,
-    @Param() { id: deploymentId }: FindOneParams,
+    @Param() { id: projectId }: FindOneParams,
     @Body() updateProjectDto: UpdateProjectDto,
   ): Promise<ProjectDocument> {
+    if (isAdmin) {
+      return this.projectsService.update(
+        workspaceId,
+        projectId,
+        updateProjectDto,
+      );
+    }
     return this.projectsService.update(
-      userId,
       workspaceId,
-      deploymentId,
+      projectId,
       updateProjectDto,
+      userId,
     );
   }
 
@@ -207,9 +224,13 @@ export class ProjectsController {
   })
   remove(
     @User('_id') userId: string,
+    @IsAdmin() isAdmin: boolean,
     @Workspace('_id') workspaceId: string,
-    @Param() { id: deploymentId }: FindOneParams,
+    @Param() { id: projectId }: FindOneParams,
   ): Promise<void> {
-    return this.projectsService.remove(userId, workspaceId, deploymentId);
+    if (isAdmin) {
+      return this.projectsService.remove(workspaceId, projectId);
+    }
+    return this.projectsService.remove(workspaceId, projectId, userId);
   }
 }

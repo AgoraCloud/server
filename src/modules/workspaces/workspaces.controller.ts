@@ -1,4 +1,4 @@
-import { Auth } from 'src/decorators/auth.decorator';
+import { Auth } from '../../decorators/auth.decorator';
 import { Action } from './../authorization/schemas/permission.schema';
 import { Permissions } from './../../decorators/permissions.decorator';
 import { ExceptionDto } from './../../utils/base.dto';
@@ -33,7 +33,7 @@ import { WorkspacesService } from './workspaces.service';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
 import { User } from '../../decorators/user.decorator';
-import { IsAdmin } from 'src/decorators/is-admin.decorator';
+import { IsAdmin } from '../../decorators/is-admin.decorator';
 
 @ApiCookieAuth()
 @ApiTags('Workspaces')

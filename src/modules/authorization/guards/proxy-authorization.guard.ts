@@ -1,4 +1,4 @@
-import { RequestWithDeploymentAndUser } from 'src/utils/requests.interface';
+import { RequestWithDeploymentAndUser } from '../../../utils/requests.interface';
 import { DeploymentNotRunningException } from './../../../exceptions/deployment-not-running.exception';
 import { DeploymentsService } from './../../deployments/deployments.service';
 import { InvalidMongoIdException } from './../../../exceptions/invalid-mongo-id.exception';

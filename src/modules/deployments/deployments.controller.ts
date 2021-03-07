@@ -37,8 +37,9 @@ import {
   DeploymentDocument,
   DeploymentImage,
 } from './schemas/deployment.schema';
-import { Auth } from 'src/decorators/auth.decorator';
+import { Auth } from '../../decorators/auth.decorator';
 import { Action } from '../authorization/schemas/permission.schema';
+import { IsAdmin } from '../../decorators/is-admin.decorator';
 
 @ApiCookieAuth()
 @ApiTags('Deployments')
@@ -129,8 +130,12 @@ export class DeploymentsController {
   })
   findAll(
     @User('_id') userId: string,
+    @IsAdmin() isAdmin: boolean,
     @Workspace('_id') workspaceId: string,
   ): Promise<DeploymentDocument[]> {
+    if (isAdmin) {
+      return this.deploymentsService.findAll(workspaceId);
+    }
     return this.deploymentsService.findAll(workspaceId, userId);
   }
 
@@ -161,9 +166,17 @@ export class DeploymentsController {
   })
   findOne(
     @User('_id') userId: string,
+    @IsAdmin() isAdmin: boolean,
     @Workspace('_id') workspaceId: string,
     @Param() { id: deploymentId }: FindOneParams,
   ): Promise<DeploymentDocument> {
+    if (isAdmin) {
+      return this.deploymentsService.findOne(
+        deploymentId,
+        undefined,
+        workspaceId,
+      );
+    }
     return this.deploymentsService.findOne(deploymentId, userId, workspaceId);
   }
 
@@ -196,15 +209,23 @@ export class DeploymentsController {
   })
   update(
     @User('_id') userId: string,
+    @IsAdmin() isAdmin: boolean,
     @Workspace('_id') workspaceId: string,
     @Param() { id: deploymentId }: FindOneParams,
     @Body() updateDeploymentDto: UpdateDeploymentDto,
   ): Promise<DeploymentDocument> {
+    if (isAdmin) {
+      return this.deploymentsService.update(
+        workspaceId,
+        deploymentId,
+        updateDeploymentDto,
+      );
+    }
     return this.deploymentsService.update(
-      userId,
       workspaceId,
       deploymentId,
       updateDeploymentDto,
+      userId,
     );
   }
 
@@ -234,9 +255,13 @@ export class DeploymentsController {
   })
   remove(
     @User('_id') userId: string,
+    @IsAdmin() isAdmin: boolean,
     @Workspace('_id') workspaceId: string,
     @Param() { id: deploymentId }: FindOneParams,
   ): Promise<void> {
-    return this.deploymentsService.remove(userId, workspaceId, deploymentId);
+    if (isAdmin) {
+      return this.deploymentsService.remove(workspaceId, deploymentId);
+    }
+    return this.deploymentsService.remove(workspaceId, deploymentId, userId);
   }
 }

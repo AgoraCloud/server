@@ -1,6 +1,7 @@
+import { IsAdmin } from '../../../decorators/is-admin.decorator';
 import { Permissions } from './../../../decorators/permissions.decorator';
 import { Action } from './../../authorization/schemas/permission.schema';
-import { Auth } from 'src/decorators/auth.decorator';
+import { Auth } from '../../../decorators/auth.decorator';
 import { ExceptionDto } from './../../../utils/base.dto';
 import {
   ApiTags,
@@ -122,10 +123,14 @@ export class WikiPagesController {
   })
   findAll(
     @User('_id') userId: string,
+    @IsAdmin() isAdmin: boolean,
     @Workspace('_id') workspaceId: string,
     @WikiSection('_id') wikiSectionId: string,
   ): Promise<WikiPageDocument[]> {
-    return this.wikiPagesService.findAll(userId, workspaceId, wikiSectionId);
+    if (isAdmin) {
+      return this.wikiPagesService.findAll(workspaceId, wikiSectionId);
+    }
+    return this.wikiPagesService.findAll(workspaceId, wikiSectionId, userId);
   }
 
   /**
@@ -159,15 +164,23 @@ export class WikiPagesController {
   })
   findOne(
     @User('_id') userId: string,
+    @IsAdmin() isAdmin: boolean,
     @Workspace('_id') workspaceId: string,
     @WikiSection('_id') wikiSectionId: string,
     @Param() { id: wikiPageId }: FindOneParams,
   ): Promise<WikiPageDocument> {
+    if (isAdmin) {
+      return this.wikiPagesService.findOne(
+        workspaceId,
+        wikiSectionId,
+        wikiPageId,
+      );
+    }
     return this.wikiPagesService.findOne(
-      userId,
       workspaceId,
       wikiSectionId,
       wikiPageId,
+      userId,
     );
   }
 
@@ -203,17 +216,26 @@ export class WikiPagesController {
   })
   update(
     @User('_id') userId: string,
+    @IsAdmin() isAdmin: boolean,
     @Workspace('_id') workspaceId: string,
     @WikiSection('_id') wikiSectionId: string,
     @Param() { id: wikiPageId }: FindOneParams,
     @Body() updateWikiPageDto: UpdateWikiPageDto,
   ): Promise<WikiPageDocument> {
+    if (isAdmin) {
+      return this.wikiPagesService.update(
+        workspaceId,
+        wikiSectionId,
+        wikiPageId,
+        updateWikiPageDto,
+      );
+    }
     return this.wikiPagesService.update(
-      userId,
       workspaceId,
       wikiSectionId,
       wikiPageId,
       updateWikiPageDto,
+      userId,
     );
   }
 
@@ -247,15 +269,23 @@ export class WikiPagesController {
   })
   remove(
     @User('_id') userId: string,
+    @IsAdmin() isAdmin: boolean,
     @Workspace('_id') workspaceId: string,
     @WikiSection('_id') wikiSectionId: string,
     @Param() { id: wikiPageId }: FindOneParams,
   ): Promise<void> {
+    if (isAdmin) {
+      return this.wikiPagesService.remove(
+        workspaceId,
+        wikiSectionId,
+        wikiPageId,
+      );
+    }
     return this.wikiPagesService.remove(
-      userId,
       workspaceId,
       wikiSectionId,
       wikiPageId,
+      userId,
     );
   }
 }

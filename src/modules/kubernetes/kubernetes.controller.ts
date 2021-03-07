@@ -1,5 +1,5 @@
 import { Action } from './../authorization/schemas/permission.schema';
-import { Auth } from 'src/decorators/auth.decorator';
+import { Auth } from '../../decorators/auth.decorator';
 import { KubernetesPodsService } from './kubernetes-pods.service';
 import { WorkspaceDocument } from './../workspaces/schemas/workspace.schema';
 import { ExceptionDto } from './../../utils/base.dto';
@@ -21,7 +21,7 @@ import { KubernetesService } from './kubernetes.service';
 import { WorkspaceInterceptor } from '../../interceptors/workspace.interceptor';
 import { Controller, UseInterceptors, Get, Param } from '@nestjs/common';
 import { Workspace } from '../../decorators/workspace.decorator';
-import { Permissions } from 'src/decorators/permissions.decorator';
+import { Permissions } from '../../decorators/permissions.decorator';
 
 @ApiCookieAuth()
 @Auth(Action.ReadWorkspace)

@@ -1,6 +1,7 @@
+import { IsAdmin } from '../../../decorators/is-admin.decorator';
 import { Permissions } from '../../../decorators/permissions.decorator';
 import { Action } from './../../authorization/schemas/permission.schema';
-import { Auth } from 'src/decorators/auth.decorator';
+import { Auth } from '../../../decorators/auth.decorator';
 import { ExceptionDto } from './../../../utils/base.dto';
 import {
   ApiTags,
@@ -120,9 +121,17 @@ export class ProjectLanesController {
   })
   findAll(
     @User('_id') userId: string,
+    @IsAdmin() isAdmin: boolean,
     @Workspace('_id') workspaceId: string,
     @Project('_id') projectId: string,
   ): Promise<ProjectLaneDocument[]> {
+    if (isAdmin) {
+      return this.projectLanesService.findAll(
+        projectId,
+        undefined,
+        workspaceId,
+      );
+    }
     return this.projectLanesService.findAll(projectId, userId, workspaceId);
   }
 
@@ -157,15 +166,23 @@ export class ProjectLanesController {
   })
   findOne(
     @User('_id') userId: string,
+    @IsAdmin() isAdmin: boolean,
     @Workspace('_id') workspaceId: string,
     @Project('_id') projectId: string,
     @Param() { id: projectLaneId }: FindOneParams,
   ): Promise<ProjectLaneDocument> {
+    if (isAdmin) {
+      return this.projectLanesService.findOne(
+        workspaceId,
+        projectId,
+        projectLaneId,
+      );
+    }
     return this.projectLanesService.findOne(
-      userId,
       workspaceId,
       projectId,
       projectLaneId,
+      userId,
     );
   }
 
@@ -201,17 +218,26 @@ export class ProjectLanesController {
   })
   update(
     @User('_id') userId: string,
+    @IsAdmin() isAdmin: boolean,
     @Workspace('_id') workspaceId: string,
     @Project('_id') projectId: string,
     @Param() { id: projectLaneId }: FindOneParams,
     @Body() updateProjectLaneDto: UpdateProjectLaneDto,
   ): Promise<ProjectLaneDocument> {
+    if (isAdmin) {
+      return this.projectLanesService.update(
+        workspaceId,
+        projectId,
+        projectLaneId,
+        updateProjectLaneDto,
+      );
+    }
     return this.projectLanesService.update(
-      userId,
       workspaceId,
       projectId,
       projectLaneId,
       updateProjectLaneDto,
+      userId,
     );
   }
 
@@ -245,15 +271,23 @@ export class ProjectLanesController {
   })
   remove(
     @User('_id') userId: string,
+    @IsAdmin() isAdmin: boolean,
     @Workspace('_id') workspaceId: string,
     @Project('_id') projectId: string,
     @Param() { id: projectLaneId }: FindOneParams,
   ): Promise<void> {
+    if (isAdmin) {
+      return this.projectLanesService.remove(
+        workspaceId,
+        projectId,
+        projectLaneId,
+      );
+    }
     return this.projectLanesService.remove(
-      userId,
       workspaceId,
       projectId,
       projectLaneId,
+      userId,
     );
   }
 }

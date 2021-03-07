@@ -56,9 +56,19 @@ interface RequestWithWorkspaceDeploymentAndUser
   deployment: DeploymentDocument;
 }
 
+interface RequestWithWorkspaceDeploymentUserAndIsAdmin
+  extends RequestWithWorkspaceDeploymentAndUser {
+  isAdmin: boolean;
+}
+
 interface RequestWithWorkspaceUserAndWikiSection
   extends RequestWithWorkspaceAndUser {
   wikiSection: WikiSectionDocument;
+}
+
+interface RequestWithWorkspaceUserWikiSectionAndIsAdmin
+  extends RequestWithWorkspaceUserAndWikiSection {
+  isAdmin: boolean;
 }
 
 interface RequestWithWorkspaceUserAndProject
@@ -66,9 +76,19 @@ interface RequestWithWorkspaceUserAndProject
   project: ProjectDocument;
 }
 
+interface RequestWithWorkspaceUserProjectAndIsAdmin
+  extends RequestWithWorkspaceUserAndProject {
+  isAdmin: boolean;
+}
+
 interface RequestWithWorkspaceUserProjectAndProjectLane
   extends RequestWithWorkspaceUserAndProject {
   projectLane: ProjectLaneDocument;
+}
+
+interface RequestWithWorkspaceUserProjectProjectLaneAndIsAdmin
+  extends RequestWithWorkspaceUserProjectAndProjectLane {
+  isAdmin: boolean;
 }
 
 export {
@@ -84,7 +104,11 @@ export {
   RequestWithWorkspaceAndUser,
   RequestWithWorkspaceUserAndIsAdmin,
   RequestWithWorkspaceDeploymentAndUser,
+  RequestWithWorkspaceDeploymentUserAndIsAdmin,
   RequestWithWorkspaceUserAndWikiSection,
+  RequestWithWorkspaceUserWikiSectionAndIsAdmin,
   RequestWithWorkspaceUserAndProject,
+  RequestWithWorkspaceUserProjectAndIsAdmin,
   RequestWithWorkspaceUserProjectAndProjectLane,
+  RequestWithWorkspaceUserProjectProjectLaneAndIsAdmin,
 };

@@ -157,11 +157,11 @@ describe('ProjectTasksService', () => {
       ).message;
       try {
         await service.findOne(
-          user._id,
           workspace._id,
           project._id,
           projectLane._id,
           projectTaskId,
+          user._id,
         );
         fail('It should throw an error');
       } catch (err) {
@@ -171,11 +171,11 @@ describe('ProjectTasksService', () => {
 
     it('should find the project task in the given workspace, project and project lane for the given user', async () => {
       const retrievedProjectTask: ProjectTaskDocument = await service.findOne(
-        user._id,
         workspace._id,
         project._id,
         projectLane._id,
         projectTaskId,
+        user._id,
       );
       expect(retrievedProjectTask._id).toEqual(projectTaskId);
       expect(retrievedProjectTask.user._id).toEqual(user._id);
@@ -197,12 +197,12 @@ describe('ProjectTasksService', () => {
       ).message;
       try {
         await service.update(
-          user._id,
           workspace._id,
           project._id,
           projectLane._id,
           projectTaskId,
           updateProjectTaskDto,
+          user._id,
         );
         fail('It should throw an error');
       } catch (err) {
@@ -212,12 +212,12 @@ describe('ProjectTasksService', () => {
 
     it('should update the project task', async () => {
       const updatedProjectTask: ProjectTaskDocument = await service.update(
-        user._id,
         workspace._id,
         project._id,
         projectLane._id,
         projectTaskId,
         updateProjectTaskDto,
+        user._id,
       );
       expect(updatedProjectTask._id).toEqual(projectTaskId);
       expect(updatedProjectTask.title).toBe(updateProjectTaskDto.title);
@@ -235,11 +235,11 @@ describe('ProjectTasksService', () => {
       ).message;
       try {
         await service.remove(
-          user._id,
           workspace._id,
           project._id,
           projectLane._id,
           projectTaskId,
+          user._id,
         );
         fail('It should throw an error');
       } catch (err) {
@@ -249,11 +249,11 @@ describe('ProjectTasksService', () => {
 
     it('should delete the project task', async () => {
       await service.remove(
-        user._id,
         workspace._id,
         project._id,
         projectLane._id,
         projectTaskId,
+        user._id,
       );
       // Make sure that the project task has been deleted
       const retrievedProjectTasks: ProjectTaskDocument[] = await service.findAll(
