@@ -31,6 +31,7 @@ import {
   ApiBadRequestResponse,
   ApiForbiddenResponse,
   ApiNotFoundResponse,
+  ApiParam,
 } from '@nestjs/swagger';
 import { Permissions } from '../../decorators/permissions.decorator';
 
@@ -53,18 +54,21 @@ export class AuthorizationController {
     type: PermissionDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
-  findCurrent(@User('_id') userId: string): Promise<PermissionDocument> {
+  findCurrentUserPermissions(
+    @User('_id') userId: string,
+  ): Promise<PermissionDocument> {
     return this.authorizationService.findOne(userId);
   }
 
   /**
-   * Get a users permissions, accessible by super admins only
+   * Get a users permissions (application-wide and workspace-wide),
+   * accessible by super admins only
    * @param userId the users id
    */
   @Permissions(Action.ManageUser)
-  @UseInterceptors(UserInterceptor)
   @Get('users/:userId/permissions')
-  @UseInterceptors(new TransformInterceptor(PermissionDto))
+  @UseInterceptors(UserInterceptor, new TransformInterceptor(PermissionDto))
+  @ApiParam({ name: 'userId', description: 'The users id' })
   @ApiOperation({ summary: 'Get a users permissions' })
   @ApiOkResponse({
     description: 'The users permissions have been successfully retrieved',
@@ -80,15 +84,79 @@ export class AuthorizationController {
     description: 'The user with the given id was not found',
     type: ExceptionDto,
   })
-  findOne(@Param('userId') userId: string): Promise<PermissionDocument> {
+  findUsersPermissions(
+    @Param('userId') userId: string,
+  ): Promise<PermissionDocument> {
     return this.authorizationService.findOne(userId);
   }
 
-  // TODO: add comments and tags
+  /**
+   * Get a users workspace-wide permissions, accessible by super
+   * admins and workspace admins
+   * @param workspaceId the workspace id
+   * @param userId the users id
+   */
+  @Permissions(Action.ManageWorkspace)
+  @UseInterceptors(
+    WorkspaceInterceptor,
+    UserInterceptor,
+    new TransformInterceptor(RolesAndPermissionsDto),
+  )
+  @Get('workspaces/:workspaceId/users/:userId/permissions')
+  @ApiParam({ name: 'workspaceId', description: 'The workspace id' })
+  @ApiParam({ name: 'userId', description: 'The users id' })
+  @ApiOperation({ summary: 'Get a users  workspace-wide permissions' })
+  @ApiOkResponse({
+    description:
+      'The users workspace-wide permissions have been successfully retrieved',
+    type: RolesAndPermissionsDto,
+  })
+  @ApiBadRequestResponse({
+    description:
+      'The provided workspace id or user id was not valid or the users workspace-wide permissions could not be found',
+    type: ExceptionDto,
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
+  @ApiNotFoundResponse({
+    description: 'The workspace or user with the given id was not found',
+    type: ExceptionDto,
+  })
+  findUsersWorkspacePermissions(
+    @Workspace('_id') workspaceId: string,
+    @Param('userId') userId: string,
+  ): Promise<WorkspaceRolesAndPermissions> {
+    return this.authorizationService.findOneWorkspacePermissions(
+      userId,
+      workspaceId,
+    );
+  }
+
+  /**
+   * Update a users application-wide permissions, accessible by super admins only
+   */
   @Permissions(Action.ManageUser)
-  @UseInterceptors(UserInterceptor)
   @Put('users/:userId/permissions')
-  @UseInterceptors(new TransformInterceptor(RolesAndPermissionsDto))
+  @UseInterceptors(
+    UserInterceptor,
+    new TransformInterceptor(RolesAndPermissionsDto),
+  )
+  @ApiParam({ name: 'userId', description: 'The users id' })
+  @ApiOperation({ summary: 'Update a users application-wide permissions' })
+  @ApiOkResponse({
+    description: 'The users permissions have been successfully updated',
+    type: RolesAndPermissionsDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'The provided roles and permissions or user id were not valid',
+    type: ExceptionDto,
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ExceptionDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ExceptionDto })
+  @ApiNotFoundResponse({
+    description: 'The user with the given id was not found',
+    type: ExceptionDto,
+  })
   updateUserPermissions(
     @Param('userId') userId: string,
     @Body() updateUserPermissionsDto: UpdateUserPermissionsDto,
@@ -99,13 +167,14 @@ export class AuthorizationController {
     );
   }
 
-  // TODO: add GET workspaces/:workspaceId/users/:userId/permissions
-
   // TODO: add comments and tags
   @Permissions(Action.ManageWorkspace)
-  @UseInterceptors(WorkspaceInterceptor, UserInterceptor)
   @Put('workspaces/:workspaceId/users/:userId/permissions')
-  @UseInterceptors(new TransformInterceptor(RolesAndPermissionsDto))
+  @UseInterceptors(
+    WorkspaceInterceptor,
+    UserInterceptor,
+    new TransformInterceptor(RolesAndPermissionsDto),
+  )
   updateUsersWorkspacePermissions(
     @Workspace('_id') workspaceId: string,
     @Param('userId') userId: string,

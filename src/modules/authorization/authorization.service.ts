@@ -65,6 +65,25 @@ export class AuthorizationService {
   }
 
   /**
+   * Find a users workspace permissions
+   * @param userId the users id
+   * @param workspaceId the workspace id
+   */
+  async findOneWorkspacePermissions(
+    userId: string,
+    workspaceId: string,
+  ): Promise<WorkspaceRolesAndPermissions> {
+    const permissions: PermissionDocument = await this.findOne(userId);
+    const workspaceRolesAndPermissions: WorkspaceRolesAndPermissions = permissions.workspaces.get(
+      workspaceId,
+    );
+    if (!workspaceRolesAndPermissions) {
+      throw new UserNotInWorkspaceException(userId, workspaceId);
+    }
+    return workspaceRolesAndPermissions;
+  }
+
+  /**
    * Update a users permissions
    * @param permission the updated users permissions
    */
@@ -115,8 +134,10 @@ export class AuthorizationService {
     const workspaceRolesAndPermissions: WorkspaceRolesAndPermissions = permissions.workspaces.get(
       workspaceId,
     );
-    // TODO: check if the user has permissions for the workspace, if they don't throw an exception
-    // if (!workspaceRolesAndPermissions) throw new
+    if (!workspaceRolesAndPermissions) {
+      throw new UserNotInWorkspaceException(userId, workspaceId);
+    }
+    // TODO: finish this
     return;
   }
 

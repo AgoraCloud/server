@@ -1,3 +1,4 @@
+import { UserDto } from './../../users/dto/user.dto';
 import { Action, Role } from './../schemas/permission.schema';
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
 
@@ -12,6 +13,10 @@ export class RolesAndPermissionsDto {
 
 @Exclude()
 export class PermissionDto extends RolesAndPermissionsDto {
+  @Expose()
+  @Type(() => UserDto)
+  readonly user: UserDto;
+
   @Expose()
   @Type(() => Object)
   @Transform((value) => mapToJson(value))

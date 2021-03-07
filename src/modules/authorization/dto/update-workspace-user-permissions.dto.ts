@@ -1,4 +1,5 @@
-import { IsIn, IsNotEmpty, IsString } from 'class-validator';
+import { IsArrayLength } from './../../../utils/dto-validators';
+import { IsIn, IsNotEmpty, IsString, Validate } from 'class-validator';
 import {
   Role,
   InWorkspaceActions,
@@ -6,9 +7,11 @@ import {
 } from './../schemas/permission.schema';
 
 export class UpdateWorkspaceUserPermissionsDto {
-  // TODO: length of this must be 1 only
   @IsString({ each: true })
   @IsNotEmpty({ each: true })
+  @Validate(IsArrayLength, [1], {
+    message: 'a user must have one role only',
+  })
   @IsIn([Role.User, Role.WorkspaceAdmin], { each: true })
   roles: [Role.User | Role.WorkspaceAdmin];
 

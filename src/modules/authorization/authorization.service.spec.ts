@@ -1,3 +1,4 @@
+import { UpdateUserPermissionsDto } from './dto/update-user-permissions.dto';
 import { UserNotInWorkspaceException } from './../../exceptions/user-not-in-workspace.exception';
 import { UserDocument } from './../users/schemas/user.schema';
 import {
@@ -6,6 +7,7 @@ import {
   PermissionDocument,
   Action,
   Role,
+  WorkspaceRolesAndPermissions,
 } from './schemas/permission.schema';
 import {
   MongooseModule,
@@ -99,12 +101,33 @@ describe('AuthorizationService', () => {
     });
   });
 
-  describe('updateUserPermissions', () => {
-    it('', async () => {});
-  });
+  describe('findOneWorkspacePermissions', () => {
+    it('should throw an error if the permissions for the given user and workspace were not found', async () => {
+      const workspaceId: string = Types.ObjectId().toHexString();
+      const expectedErrorMessage: string = new UserNotInWorkspaceException(
+        user._id,
+        workspaceId,
+      ).message;
+      try {
+        await service.findOneWorkspacePermissions(user._id, workspaceId);
+        fail('It should throw an error');
+      } catch (err) {
+        expect(err.message).toBe(expectedErrorMessage);
+      }
+    });
 
-  describe('updateUsersWorkspacePermissions', () => {
-    it('', async () => {});
+    it('should find the permissions for the given workspace and user', async () => {
+      const workspaceRolesAndPermissions: WorkspaceRolesAndPermissions = await service.findOneWorkspacePermissions(
+        user._id,
+        workspaceId,
+      );
+      expect(workspaceRolesAndPermissions).toBeTruthy();
+      expect(workspaceRolesAndPermissions.roles.length).toBe(1);
+      expect(workspaceRolesAndPermissions.roles[0]).toBe(
+        permissions.workspaces.get(workspaceId).roles[0],
+      );
+      expect(workspaceRolesAndPermissions.permissions.length).toBe(0);
+    });
   });
 
   describe('can', () => {
@@ -212,5 +235,43 @@ describe('AuthorizationService', () => {
       expect(canActivate).toBe(true);
       expect(isAdmin).toBe(false);
     });
+  });
+
+  describe('updateUserPermissions', () => {
+    it('should update the users application-wide roles and clear the users permissions if the users new role is super admin', async () => {
+      const updateUserPermissionsDto: UpdateUserPermissionsDto = {
+        roles: [Role.SuperAdmin],
+        permissions: [Action.DeleteWorkspace],
+      };
+      const updatedPermissions: PermissionDocument = await service.updateUserPermissions(
+        user._id,
+        updateUserPermissionsDto,
+      );
+      expect(updatedPermissions.roles.length).toBe(1);
+      expect(updatedPermissions.roles[0]).toBe(
+        updateUserPermissionsDto.roles[0],
+      );
+      expect(updatedPermissions.permissions.length).toBe(0);
+    });
+
+    it('should update the users application-wide roles and permissions', async () => {
+      const updateUserPermissionsDto: UpdateUserPermissionsDto = {
+        roles: [Role.User],
+        permissions: [Action.CreateWorkspace, Action.DeleteWorkspace],
+      };
+      const updatedPermissions: PermissionDocument = await service.updateUserPermissions(
+        user._id,
+        updateUserPermissionsDto,
+      );
+      expect(updatedPermissions.roles.length).toBe(1);
+      expect(updatedPermissions.roles[0]).toBe(
+        updateUserPermissionsDto.roles[0],
+      );
+      expect(updatedPermissions.permissions.length).toBe(2);
+    });
+  });
+
+  describe('updateUsersWorkspacePermissions', () => {
+    it('', async () => {});
   });
 });
