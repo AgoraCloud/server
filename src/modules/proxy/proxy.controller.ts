@@ -1,3 +1,4 @@
+import { Auth } from 'src/decorators/auth.decorator';
 import { ExceptionDto } from './../../utils/base.dto';
 import {
   ApiTags,
@@ -9,7 +10,6 @@ import {
 } from '@nestjs/swagger';
 import { DeploymentDocument } from './../deployments/schemas/deployment.schema';
 import { ProxyService } from './proxy.service';
-import { JwtAuthenticationGuard } from '../authentication/guards/jwt-authentication.guard';
 import { All, Controller, Req, Res, UseGuards } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { Deployment } from '../../decorators/deployment.decorator';
@@ -17,8 +17,9 @@ import { ProxyAuthorizationGuard } from '../authorization/guards/proxy-authoriza
 
 @ApiCookieAuth()
 @ApiTags('Proxy')
+@Auth()
 @Controller('proxy/:deploymentId')
-@UseGuards(JwtAuthenticationGuard, ProxyAuthorizationGuard)
+@UseGuards(ProxyAuthorizationGuard)
 export class ProxyController {
   constructor(private readonly proxyService: ProxyService) {}
 

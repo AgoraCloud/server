@@ -9,7 +9,10 @@ export enum Role {
 }
 
 export enum Action {
+  // User Actions
+  ManageUser = 'users:manage',
   // Workspace Actions
+  ManageWorkspace = 'workspaces:manage',
   CreateWorkspace = 'workspaces:create',
   ReadWorkspace = 'workspaces:read',
   UpdateWorkspace = 'workspaces:update',

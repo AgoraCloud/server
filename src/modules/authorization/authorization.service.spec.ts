@@ -1,4 +1,4 @@
-import { WorkspaceNotFoundException } from './../../exceptions/workspace-not-found.exception';
+import { UserNotInWorkspaceException } from './../../exceptions/user-not-in-workspace.exception';
 import { UserDocument } from './../users/schemas/user.schema';
 import {
   Permission,
@@ -99,6 +99,14 @@ describe('AuthorizationService', () => {
     });
   });
 
+  describe('updateUserPermissions', () => {
+    it('', async () => {});
+  });
+
+  describe('updateUsersWorkspacePermissions', () => {
+    it('', async () => {});
+  });
+
   describe('can', () => {
     it('should grant a super admin any permissions needed', async () => {
       const { canActivate, isAdmin } = await service.can(user, [
@@ -137,7 +145,8 @@ describe('AuthorizationService', () => {
 
     it('should throw an error if the permissions for the given workspace id and user were not found', async () => {
       const workspaceId: string = Types.ObjectId().toHexString();
-      const expectedErrorMessage: string = new WorkspaceNotFoundException(
+      const expectedErrorMessage: string = new UserNotInWorkspaceException(
+        user._id,
         workspaceId,
       ).message;
       try {
@@ -175,6 +184,10 @@ describe('AuthorizationService', () => {
           Action.CreateDeployment,
           Action.ReadDeployment,
           Action.ProxyDeployment,
+          Action.CreateWiki,
+          Action.ReadWiki,
+          Action.UpdateWiki,
+          Action.DeleteWiki,
         ],
       });
       permissions = await permissionsModel

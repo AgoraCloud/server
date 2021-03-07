@@ -1,3 +1,4 @@
+import { UserNotInWorkspaceException } from './../exceptions/user-not-in-workspace.exception';
 import { InvalidMongoIdException } from './../exceptions/invalid-mongo-id.exception';
 import { RequestWithWorkspaceUserAndIsAdmin } from '../utils/requests.interface';
 import { WorkspaceDocument } from './../modules/workspaces/schemas/workspace.schema';
@@ -34,6 +35,13 @@ export class WorkspaceInterceptor implements NestInterceptor {
       workspaceId,
       isAdmin ? undefined : user._id,
     );
+
+    // A super admin or workspace admin is updating a user in the workspace,
+    // check if the user exists in the workspace
+    const userId: string = request.params.userId;
+    if (userId && workspace.users.findIndex((u) => u._id === userId) === -1) {
+      throw new UserNotInWorkspaceException(userId, workspaceId);
+    }
     request.workspace = workspace;
     return next.handle();
   }

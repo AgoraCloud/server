@@ -1,6 +1,6 @@
+import { UserNotInWorkspaceException } from './../../exceptions/user-not-in-workspace.exception';
 import { UpdateWorkspaceUserPermissionsDto } from './dto/update-workspace-user-permissions.dto';
 import { UpdateUserPermissionsDto } from './dto/update-user-permissions.dto';
-import { WorkspaceNotFoundException } from './../../exceptions/workspace-not-found.exception';
 import { UserDocument } from './../users/schemas/user.schema';
 import { WorkspaceDocument } from './../workspaces/schemas/workspace.schema';
 import { WorkspaceDeletedEvent } from './../../events/workspace-deleted.event';
@@ -79,23 +79,44 @@ export class AuthorizationService {
     return updatedPermission;
   }
 
-  // TODO: add comments
-  // TODO: finish this
+  /**
+   * Update a users permissions (application-wide)
+   * @param userId the users id
+   * @param updateUserPermissionsDto the updated user permissions
+   */
   async updateUserPermissions(
     userId: string,
     updateUserPermissionsDto: UpdateUserPermissionsDto,
   ): Promise<PermissionDocument> {
-    return;
+    let permissions: PermissionDocument = await this.findOne(userId);
+    permissions.roles = updateUserPermissionsDto.roles;
+    // For now, a users roles can only contain one role
+    if (permissions.roles[0] === Role.SuperAdmin) {
+      permissions.permissions = [];
+    } else {
+      permissions.permissions = updateUserPermissionsDto.permissions;
+    }
+    permissions = await this.update(permissions);
+    return permissions;
   }
 
-  // TODO: add comments
-  // TODO: finish this
-  async updateWorkspaceUserPermissions(
-    workspaceId: string,
+  /**
+   * Update a users workspace permissions
+   * @param userId the users id
+   * @param workspaceId the workspace id
+   * @param updateWorkspaceUserPermissionsDto the updated users workspace permissions
+   */
+  async updateUsersWorkspacePermissions(
     userId: string,
+    workspaceId: string,
     updateWorkspaceUserPermissionsDto: UpdateWorkspaceUserPermissionsDto,
   ): Promise<WorkspaceRolesAndPermissions> {
-    // TODO: get the users permissions, check if they have the workspace, if they dont throw an exception
+    const permissions: PermissionDocument = await this.findOne(userId);
+    const workspaceRolesAndPermissions: WorkspaceRolesAndPermissions = permissions.workspaces.get(
+      workspaceId,
+    );
+    // TODO: check if the user has permissions for the workspace, if they don't throw an exception
+    // if (!workspaceRolesAndPermissions) throw new
     return;
   }
 
@@ -220,9 +241,12 @@ export class AuthorizationService {
       return hasPermissions;
     };
 
+    // A super admin can perform any action application-wide and workspace-wide
     if (permission.roles.includes(Role.SuperAdmin)) {
       return { canActivate: true, isAdmin: true };
-    } else if (!workspaceId) {
+    }
+    // User is not a super admin, check application-wide permissions
+    if (!workspaceId) {
       return {
         canActivate: hasPermissions(grantedPermissions, neededPermissions),
         isAdmin: false,
@@ -233,18 +257,37 @@ export class AuthorizationService {
       workspaceId,
     );
     if (!workspaceRolesAndPermissions) {
-      throw new WorkspaceNotFoundException(workspaceId);
+      throw new UserNotInWorkspaceException(user._id, workspaceId);
     }
+    // A workspace admin can perform any action workspace-wide
     if (workspaceRolesAndPermissions.roles.includes(Role.WorkspaceAdmin)) {
       return { canActivate: true, isAdmin: true };
-    } else {
-      return {
-        canActivate: hasPermissions(
-          [...grantedPermissions, ...workspaceRolesAndPermissions.permissions],
-          neededPermissions,
-        ),
-        isAdmin: false,
-      };
     }
+    // User is not a workspace admin, check workspace-wide permissions
+    const workspacePermissions: Action[] =
+      workspaceRolesAndPermissions.permissions;
+    if (workspacePermissions.includes(Action.CreateWiki)) {
+      workspacePermissions.push(Action.CreateWikiSection);
+      workspacePermissions.push(Action.CreateWikiPage);
+    }
+    if (workspacePermissions.includes(Action.ReadWiki)) {
+      workspacePermissions.push(Action.ReadWikiSection);
+      workspacePermissions.push(Action.ReadWikiPage);
+    }
+    if (workspacePermissions.includes(Action.UpdateWiki)) {
+      workspacePermissions.push(Action.UpdateWikiSection);
+      workspacePermissions.push(Action.UpdateWikiPage);
+    }
+    if (workspacePermissions.includes(Action.DeleteWiki)) {
+      workspacePermissions.push(Action.DeleteWikiSection);
+      workspacePermissions.push(Action.DeleteWikiPage);
+    }
+    return {
+      canActivate: hasPermissions(
+        [...grantedPermissions, ...workspacePermissions],
+        neededPermissions,
+      ),
+      isAdmin: false,
+    };
   }
 }
