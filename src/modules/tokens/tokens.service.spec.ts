@@ -1,3 +1,4 @@
+import { TokenExpiredException } from './../../exceptions/token-expired.exception';
 import { DateUtil } from './../../utils/date.util';
 import { User, UserSchema } from './../users/schemas/user.schema';
 import { TokenNotFoundException } from './../../exceptions/token-not-found.exception';
@@ -26,13 +27,7 @@ const user: UserDocument = {
   isVerified: true,
 } as UserDocument;
 
-const token: Token = new Token({
-  type: TokenType.ChangePassword,
-  user,
-  expiresAt: new Date(),
-});
-
-let tokenId: string;
+let token: TokenDocument;
 
 describe('TokensService', () => {
   let service: TokensService;
@@ -65,11 +60,16 @@ describe('TokensService', () => {
 
   describe('create', () => {
     it('should create a token', async () => {
-      const createdToken: TokenDocument = await service.create(token);
-      expect(createdToken.type).toBe(token.type);
+      const tokenToCreate: Token = new Token({
+        type: TokenType.ChangePassword,
+        user,
+        expiresAt: new Date(),
+      });
+      const createdToken: TokenDocument = await service.create(tokenToCreate);
+      expect(createdToken.type).toBe(tokenToCreate.type);
       expect(createdToken.user._id).toBe(user._id);
-      expect(createdToken.expiresAt).toBe(token.expiresAt);
-      tokenId = createdToken._id;
+      expect(createdToken.expiresAt).toBe(tokenToCreate.expiresAt);
+      token = createdToken;
     });
   });
 
@@ -79,7 +79,7 @@ describe('TokensService', () => {
       const expectedErrorMessage: string = new TokenNotFoundException(tokenId)
         .message;
       try {
-        await service.findOneAndRemove(tokenId, token.type as TokenType);
+        await service.findOneAndRemove(tokenId, token.type);
         fail('It should throw an error');
       } catch (err) {
         expect(err.message).toBe(expectedErrorMessage);
@@ -88,22 +88,33 @@ describe('TokensService', () => {
 
     it('should find the token and remove it', async () => {
       const retrievedToken: TokenDocument = await service.findOneAndRemove(
-        tokenId,
-        token.type as TokenType,
+        token._id,
+        token.type,
       );
-      expect(retrievedToken._id).toEqual(tokenId);
+      expect(retrievedToken._id).toEqual(token._id);
       expect(retrievedToken.type).toBe(token.type);
     });
   });
 
   describe('isTokenExpired', () => {
-    it('should return true if the token is expired', () => {
-      expect(service.isTokenExpired(token as TokenDocument)).toBe(true);
+    it('should throw an exception if the token is expired', () => {
+      const expectedErrorMessage: string = new TokenExpiredException(token._id)
+        .message;
+      try {
+        service.isTokenExpired(token);
+        fail('It should throw an error');
+      } catch (err) {
+        expect(err.message).toBe(expectedErrorMessage);
+      }
     });
 
-    it('should return false if the token is not expired', () => {
+    it('should not throw an exception if the token is not expired', () => {
       token.expiresAt = DateUtil.addDays(new Date());
-      expect(service.isTokenExpired(token as TokenDocument)).toBe(false);
+      try {
+        service.isTokenExpired(token);
+      } catch (err) {
+        fail('It should not throw an error');
+      }
     });
   });
 });
